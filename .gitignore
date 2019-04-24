@@ -3,3 +3,5 @@
 /Vulkan/x64/
 /Vulkan/Vulkan/Debug/
 /Vulkan/Vulkan/x64/
+!*.lib
+!*.dll
