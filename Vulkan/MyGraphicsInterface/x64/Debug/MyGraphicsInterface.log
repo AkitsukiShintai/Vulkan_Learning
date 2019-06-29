@@ -1,0 +1,67 @@
+﻿  VulkanApplication.cpp
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(403): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(851): warning C4244: '=': conversion from 'uint32_t' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(852): warning C4244: '=': conversion from 'uint32_t' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(874): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1510): warning C4244: '=': conversion from 'uint32_t' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1511): warning C4244: '=': conversion from 'uint32_t' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1533): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(121): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(257): note: see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+          with
+          [
+              _Ty=uint32_t,
+              _Ty2=size_t &
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(257): note: see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+          with
+          [
+              _Ty=uint32_t,
+              _Ty2=size_t &
+          ]
+  E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(389): note: see reference to function template instantiation 'std::optional<uint32_t> &std::optional<uint32_t>::operator =<size_t&,void>(_Ty2)' being compiled
+          with
+          [
+              _Ty2=size_t &
+          ]
+  E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(389): note: see reference to function template instantiation 'std::optional<uint32_t> &std::optional<uint32_t>::operator =<size_t&,void>(_Ty2)' being compiled
+          with
+          [
+              _Ty2=size_t &
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\chrono(595): note: see reference to class template instantiation 'std::chrono::duration<double,std::ratio<1,1>>' being compiled
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\chrono(172): note: see reference to class template instantiation 'std::chrono::duration<__int64,std::nano>' being compiled
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\chrono(574): note: see reference to class template instantiation 'std::chrono::time_point<std::chrono::steady_clock,std::chrono::steady_clock::duration>' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\xmemory0(202): warning C4267: 'initializing': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=unsigned int
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(111): note: see reference to function template instantiation 'void std::_Construct_in_place<unsigned int,size_t&>(_Ty &,size_t &) noexcept' being compiled
+          with
+          [
+              _Ty=unsigned int
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(123): note: see reference to function template instantiation '_Ty &std::_Optional_construct_base<_Ty>::_Construct<size_t&>(size_t &)' being compiled
+          with
+          [
+              _Ty=uint32_t
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(123): note: see reference to function template instantiation '_Ty &std::_Optional_construct_base<_Ty>::_Construct<size_t&>(size_t &)' being compiled
+          with
+          [
+              _Ty=uint32_t
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(257): note: see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+          with
+          [
+              _Ty=uint32_t,
+              _Ty2=size_t &
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\include\optional(257): note: see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+          with
+          [
+              _Ty=uint32_t,
+              _Ty2=size_t &
+          ]
+  MyGraphicsInterface.vcxproj -> E:\GitHubRepository\Vulkan_Learning\Vulkan\x64\Debug\MyGraphicsInterface.exe
