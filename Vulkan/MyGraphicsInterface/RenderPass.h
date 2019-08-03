@@ -1,9 +1,9 @@
-#pragma once
-class RenderPass {
-public:
-	RenderPass();
-
-
-
-
-};
+//#pragma once
+//class RenderPass {
+//public:
+//	RenderPass();
+//
+//
+//
+//
+//};

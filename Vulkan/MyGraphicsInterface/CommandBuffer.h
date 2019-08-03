@@ -5,6 +5,6 @@
 class CommandBuffer {
 public:
 	CommandBuffer();
-	void SetViewport(Rect viewport);
+	//void SetViewport(Rect viewport);
 	//void Draw(Mesh mesh,Material material, int submesh);
 };

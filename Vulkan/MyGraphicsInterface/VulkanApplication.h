@@ -12,154 +12,293 @@
 #include "RenderPipeline.h"
 #include "Mesh.h"
 #include<array>
+#include<unordered_set>
+#include <unordered_map>
+#include "ObjectPool.h"
+#include "InternalStruct.h"
 class VulkanApplication :public Application {
 
-public:
-	glm::vec3 mCamera;
-	glm::vec3 mCameraForward;
+private:
+
+
 public:
 	VulkanApplication(std::string applicationName, int width, int height);
 	VulkanApplication();
 public:
-	void Init() override;
-	void Run() override;
-	void SetResizable(bool state) override;
+	void Init();
+	void Run();
+	void SetResizable(bool state);
 
 	//help function;
-	void SetApplicationInfo(std::string applicationName, int width, int height) override;
+	void SetApplicationInfo(std::string applicationName, int width, int height);
 	void SetRequiredValadationLayers(std::vector<const char*> valadationLayers)override;
 	void SetRequiredExtentions(std::vector<const char*> extentions)override;
 	void SetWindowHandle(HWND window, HINSTANCE handle)override;
 	void SetDeviceExtensions(std::vector<const char*> extentions)override;
 	void SetQueueFlag(QueueFlagBits flag);
-	void ProcessInput(GLFWwindow* window);
+	void ProcessInput(GLFWwindow* window) {};
 private:
-	struct Familys {
-		std::optional<uint32_t> graphicsFamily;
-		std::optional<uint32_t> presentFamily;
-		std::optional<uint32_t> computeFamily;
-		std::optional<uint32_t> transferFamily;
-		std::optional<uint32_t> sparseBindingFamily;
-		bool isComplete(unsigned int mQueueFlags);
-	};
-
-	struct SwapChainSupportDetails {
-		VkSurfaceCapabilitiesKHR capabilities;
-		std::vector<VkSurfaceFormatKHR> formats;
-		std::vector<VkPresentModeKHR> presentModes;
-
-	};
-
-
-	struct Queues {
-		VkQueue graphicsQueue;
-		VkQueue presentQueue;
-		VkQueue computeQueue;
-		VkQueue transferQueue;
-		VkQueue sparseBindingQueue;
-	};
 
 private:
-	GLFWwindow* mWindow;
+	GLFWwindow* m_Window;
 
-	std::vector<const char*> mValidationLayers;
-	std::vector<const char*> mRequiredExtentions;
-	std::vector<const char*> mDeviceExtensions;
-	unsigned int mQueueFlags;
-	Familys mFamily;
-	bool mEnableValidationLayer;
+	std::vector<const char*> m_ValidationLayers;
+	std::vector<const char*> m_RequiredExtentions;
+	std::vector<const char*> m_DeviceExtensions;
+	unsigned int m_QueueFlags;
+	Familys m_Family;
+	bool m_EnableValidationLayer;
 
 	int MAX_FRAMES_IN_FLIGHT = 2;
 
 	size_t currentFrame = 0;
 
 
-	VkInstance mInstance;
+	VkInstance m_Instance;
 
 	//debug related
-	VkDebugUtilsMessengerEXT mDebugMessenger;
-	PFN_vkDebugUtilsMessengerCallbackEXT mDebugCallback;
+	VkDebugUtilsMessengerEXT m_DebugMessenger;
+	PFN_vkDebugUtilsMessengerCallbackEXT m_DebugCallback;
 
 	//surface
-	VkSurfaceKHR mSurface;
-	HWND mHWND;
-	HINSTANCE mHINSTANCE;
+	VkSurfaceKHR m_Surface;
+	HWND m_HWND;
+	HINSTANCE m_HINSTANCE;
 
 	//Device related
-	VkPhysicalDevice mPhysicalDevice;
-	VkDevice mLogicDevice;
-	Queues mQueues;
+	VkPhysicalDevice m_PhysicalDevice;
+	VkDevice m_LogicDevice;
+	Queues m_Queues;
 
 	//swap chain related
-	VkSwapchainKHR mSwapChain;
-	std::vector<VkImage>mSwapChainImages;
-	std::vector<VkImageView>mSwapChainImageViews;
-	VkFormat mSwapChainImageFormat;
-	VkExtent2D mSwapChainExtent;
+	VkSwapchainKHR m_SwapChain;
+	std::vector<Image> m_SwapChainImages;
+	VkFormat m_SwapChainImageFormat;
+	VkExtent2D m_SwapChainExtent;
 
-	//Render pass related
-	bool mFramebufferResized = false;
-	VkRenderPass mRenderPass;
-	VkFramebuffer mSwapChainFramebuffer;
+	bool m_FramebufferResized = false;
 
-	//first stage
-	VkPipeline mPipeline1;
-	VkPipelineLayout mPipelineLayout1;
+	VkCommandPool m_CommandPool;
 
-	
-	VkPipeline mPipeline2;
-	VkPipelineLayout mPipelineLayout2;
+	std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+	std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+	std::vector<VkFence> m_InFlightFences;
 
 
+	VkDescriptorPool m_DescriptorPool;
 
+	Image m_RenderTarget;
+	Buffer m_CameraBuffer;
 
-	VkCommandPool mCommandPool;
-	VkCommandBuffer mCommandBuffer;
-	
-	std::vector<VkSemaphore>mImageAvailableSemaphores;
-	std::vector<VkSemaphore>mRenderFinishedSemaphores;
-	std::vector<VkFence>mInFlightFences;
+	Image m_DepthBuffer;
 
-	VkDescriptorSetLayout mDescriptorSetLayout;
+	Image m_WhiteImage;
+	VkSampler m_TextureSampler;
 
-	VkBuffer mVertexBuffer;
-	VkDeviceMemory mVertexBufferMemory;
-
-	VkBuffer mIndexBuffer;
-	VkDeviceMemory mIndexBufferMemory;
-
-
-	VkBuffer mUniformBuffers;
-	VkDeviceMemory mUniformBuffersMemory;
-
-	VkDescriptorPool mDescriptorPool;
-	VkDescriptorSet mDescriptorSets;
-
-
-	VkImage mTextureImage;
-	VkDeviceMemory mTextureImageMemory;
-	VkImageView mTextureImageView;
-	VkSampler mTextureSampler[2];
+	//#define TEXTURE_ARRAY_SIZE 8
+		//opaque texture array
+		//VkDescriptorImageInfo	m_OpaqueDescriptorImageInfos[TEXTURE_ARRAY_SIZE];
 
 private:
-	std::map<std::string, VkRenderPass> mRenderPasses;
-	std::map<VkRenderPass, std::vector<VkPipeline>> mPipelines;
-	std::map<VkRenderPass, std::vector<VkPipelineLayout>> mPipelineLayouts;
-	std::vector<VkFramebuffer> mFramebuffers;
-	//pass -- mesh
-	std::map<VkRenderPass, std::vector<Mesh*>>  mRenderPass_Meshes;
+	friend class Application;
+	//std::vector<Pipeline> mPip
+	//std::unordered_map<size_t, std::vector<VkDescriptorSet>> m_Pipeline_DescriptorSets;
+	//std::unordered_map<size_t, std::vector<Pipeline>> m_RenderPass_Pipelines;
+	//std::unordered_map<size_t,VkFramebuffer> m_RenderPass_Framebuffers;
+	////pass -- m_esh
+	//std::unordered_map<size_t, std::vector<Model>>  m_Pipeline_Models;
+	////pass -- descriptor set layout
+	//std::unordered_map<size_t, VkDescriptorSetLayout>  m_Pipeline_DescriptorSetLayout;
 
+	////0 skybox
+	////1 opaque
+	////2 differ 1
+	////3 differ 2
+	////4 ssr
+	std::array<VkRenderPass, 5> m_RenderPasses;
+	Pipeline skyboxPipeline;
+	VkDescriptorSet skyboxDescriptorSet;
+	Model skyboxModel;
+	VkFramebuffer skyboxFramebuffer;
+	VkDescriptorSetLayout skyboxDescriptorSetLayout;
+
+	Pipeline opaquePipeline;
+	std::vector<VkDescriptorSet> opaqueDescriptorSet;
+	VkFramebuffer opaqueFramebuffer;
+	std::vector<Model> opaqueModels;
+	VkDescriptorSetLayout opaqueDescriptorSetLayout;
+
+	//differ render
+	Pipeline differPipelines[2];
+	Image normalImage;
+	Image colorImage;
+	Image positionImage;
+	VkFramebuffer differ_framebuffer[2];
+	Buffer light;
+	VkDescriptorSetLayout differ_descriptorSetLayouts[2];
+	Model full_screen_rect;
+	std::vector<Model> differModels;
+	std::vector<VkDescriptorSet> differDescriptorSets;
+	VkDescriptorSet differ_secondStageDescriptorSet;
+
+	//SSR
+	Pipeline SSRPipelines;
+	VkFramebuffer SSR_framebuffer;
+	VkDescriptorSetLayout SSR_descriptorSetLayout;
+	std::vector<Model> SSRModels;
+	std::vector<VkDescriptorSet> SSRDescriptorSets;
+	VkDescriptorSet SSR_DescriptorSet;
+
+	/*ObjectPool<VkRenderPass, 50> m_RenderPassPool;
+	ObjectPool<Image, 200> m_ImagePool;
+	ObjectPool<Pipeline, 200> m_PipelinePool;
+	ObjectPool<Buffer, 1000> m_BufferPool;
+	ObjectPool<VkSampler, 20> m_SamplerPool;
+	ObjectPool<VkFramebuffer, 200> m_FramebufferPool;
+	ObjectPool<VkDescriptorSet, 1000> m_DescriptorSetPool;*/
 public:
 	//help functions
-	VkInstance GetInstance();
-	VkDevice GetDevice();
-	VkRenderPass GetRenderPass();
-	VkExtent2D GetSwipchainExtent();
-	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-private:
-	void MainLoop();
+	VkPipelineDepthStencilStateCreateInfo CreateDepthStencilStateCreateInfo(
+		VkBool32                                  depthTestEnable = VK_FALSE,
+		VkBool32                                  depthWriteEnable = VK_FALSE,
+		VkCompareOp                               depthCompareOp = VK_COMPARE_OP_LESS,
+		float                                     minDepthBounds = 0,
+		float                                     maxDepthBounds = 1,
+		VkBool32                                  depthBoundsTestEnable = VK_FALSE,
+		VkBool32                                  stencilTestEnable = VK_FALSE,
+		VkStencilOpState                          front = {},
+		VkStencilOpState                          back = {},
+		VkPipelineDepthStencilStateCreateFlags    flags = 0);
+
+	VkStencilOpState CreateStencilOpState(
+		VkStencilOp    failOp,
+		VkStencilOp    passOp,
+		VkStencilOp    depthFailOp,
+		VkCompareOp    compareOp,
+		uint32_t       compareMask,
+		uint32_t       writeMask,
+		uint32_t       reference);
+
+	Buffer CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+	void MapBuffer(Buffer& buffer);
+	void UnMapBuffer(Buffer& buffer);
+	void CopyDataToBuffer(void* data, Buffer& buffer, uint32_t size = 0);
+	void CopyBufferToBuffer(VkCommandBuffer cmd, Buffer srcBuffer, Buffer dstBuffer);
+	void SetDescriptorImageInfo(Image& image, VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	Image CreateCubeMap(std::vector<std::string> files);
+	Image CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkImageType type = VK_IMAGE_TYPE_2D, uint32_t layers = 1, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL);
+	void CreateImageView(Image& image, VkFormat format, VkImageAspectFlags flag = VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType type = VK_IMAGE_VIEW_TYPE_2D);
+	VkFramebuffer CreateFrameBuffer(std::vector<Image> images, VkRenderPass renderPass);
+	VkPipelineShaderStageCreateInfo CreateShader(std::string name, VkShaderStageFlagBits stage, const char* enterFunction = "main");
+	Pipeline CreatePipeline(VkRenderPass renderPass,
+		std::vector<VkPipelineShaderStageCreateInfo> stages,
+		std::vector<VkVertexInputBindingDescription> bindings,
+		std::vector<VkVertexInputAttributeDescription> attributes,
+		std::vector<VkDescriptorSetLayout> laytous,
+		VkPipelineDepthStencilStateCreateInfo depthInfo,
+		uint32_t subpass,
+		std::vector < VkPipelineColorBlendStateCreateInfo> colorBlendings = {},
+		std::vector<VkViewport> viewports = {},
+		std::vector <VkRect2D> scissors = {},
+		std::vector < VkPipelineRasterizationStateCreateInfo> rasterizationStates = {},
+		std::vector < VkPipelineMultisampleStateCreateInfo> m_ultisamplings = {},
+		std::vector < VkDynamicState> dynamicStates = {}
+	);
+	void CopyBufferToImage(VkCommandBuffer cmd, uint32_t width, uint32_t height, Buffer srcBuffer, Image& dstImage, std::vector<VkBufferImageCopy> region = {});
+	void CopyImageToImage(VkCommandBuffer cmd, uint32_t width, uint32_t height, Image& srcImage, Image& dstImage);
+	VkAttachmentDescription CreateAttachmentDescriptionForColorAttachment(VkFormat format,
+		VkImageLayout startLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		VkImageLayout endLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE);
+	VkAttachmentDescription CreateAttachmentDescriptionForDepthAttachment(VkFormat format,
+		VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		VkImageLayout startLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		VkImageLayout endLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
+
+
+	void SetSubpassDescriptionColorAttachment(VkSubpassDescription& description, VkAttachmentReference* attachmentsRef, uint32_t size);
+	void SetSubpassDescriptionDepthAttachment(VkSubpassDescription& description, const VkAttachmentReference& attachmentRef);
+	void SetSubpassDescriptionDepthAttachment(VkSubpassDescription& description, VkAttachmentReference* attachmentsRef, uint32_t size);
+	void SetSubpassDescriptionBindPoint(VkSubpassDescription& description, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS);
+
+
+
+
+
+	VkSubpassDependency CreateSubpassDependency(uint32_t srcSubpass,
+		uint32_t                dstSubpass,
+		VkPipelineStageFlags    srcStageMask,
+		VkPipelineStageFlags    dstStageMask,
+		VkAccessFlags           srcAccessMask,
+		VkAccessFlags           dstAccessMask,
+		VkDependencyFlags       dependencyFlags = 0);
+	VkRenderPass CreateRenderPass(std::vector< VkAttachmentDescription> attachments, std::vector< VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> dependencies);
+
+	void TransitionImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout newLayout, VkImageSubresourceRange subSourceRange = { VK_IMAGE_ASPECT_COLOR_BIT ,0,1,0,1 });
+
+	VkWriteDescriptorSet CreateWriteDescriptorSetForBuffer(const Buffer& buffer, uint32_t buinding, VkDescriptorSet descriptorSet);
+	VkWriteDescriptorSet CreateWriteDescriptorSetForImage(const Image& image, uint32_t buinding, VkDescriptorSet descriptorSet);
+
+	void Present(Image& image, uint32_t swapChainID, VkSemaphore* signalSemaphores);
+	VkCommandBuffer CreateCommandBuffer(bool start = true);
+	void DestroyBuffer(Buffer& buffer);
+
+	void UpdateUniformBuffer();
+	Image CreateTextureImage(const char* filePath);
+
+	VkSampler CreateTextureSampler();
+	void SetSampler(Image& image, VkSampler sampler);
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	VkCommandBuffer BeginSingleTimeCommands();
+	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+	void Prepare();
+
+	Buffer CreateVertexBuffer(std::vector<Vertex_Aki>vertexdata);
+	Buffer CreateIndexBuffer(std::vector<uint32_t>indices);
+
+	VkVertexInputBindingDescription CreateVertexInputBindingDescription(uint32_t binding, VkVertexInputRate inputRate, uint32_t stride = sizeof(Vertex_Aki));
+	VkVertexInputAttributeDescription CreateVertexInputAttributeDescription(uint32_t  location, uint32_t binding, VkFormat format, uint32_t offset = 0);
+
+	VkDescriptorSetAllocateInfo CreateDescriptorSetAllocateInfo(VkDescriptorSetLayout* descriptorSetLayouts, uint32_t count = 1);
+	void UpdateDescriptorSets(std::vector<VkWriteDescriptorSet> writeDescriptors);
+
+	VkDescriptorSet CreateDescriptorSet(std::vector<VkDescriptorSetAllocateInfo> allocateInfo);
+
+
+	void CreateDescriptorPool();
+	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType descriptorType,
+		VkShaderStageFlags stageFlags, uint32_t descriptorCount = 1);
+
+	VkDescriptorSetLayout CreateDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding> binds);
+	VkPipelineColorBlendAttachmentState CreatePipelineColorBlendAttachmentState(VkBool32 blendEnable = VK_FALSE,
+		VkBlendFactor            srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+		VkBlendFactor            dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+		VkBlendOp                colorBlendOp = VK_BLEND_OP_ADD,
+		VkBlendFactor            srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+		VkBlendFactor            dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+		VkBlendOp                alphaBlendOp = VK_BLEND_OP_ADD,
+		VkColorComponentFlags    colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+	VkPipelineColorBlendStateCreateInfo CreatePipelineColorBlendStateCreateInfo(const VkPipelineColorBlendAttachmentState* colorBlendAttachments, size_t cout, VkBool32 logicOpEnable = VK_FALSE, VkLogicOp logicOp = VK_LOGIC_OP_COPY);
+
+
+	void DrawFrame(const VkCommandBuffer& cmd, Image& presentImage);
+	void SwapImageToScreen() {};
+
+	void BeginRenderPass(const VkCommandBuffer& cmd, const VkRenderPass renderPass, const VkFramebuffer& framebuffer, const std::vector<VkClearValue>& clearColors);
+	void BeginPipeline(const VkCommandBuffer& cmd, const Pipeline& pipeline, VkViewport viewPort = {}, VkRect2D scissor = {});
+	void DrawMesh(const VkCommandBuffer& cmd, const Model& model, const Pipeline& pipeline, const VkDescriptorSet* descriptorSet, size_t descriptorSetCount = 1);
+
+
+	GLFWwindow* GetWindow() override;
+public:
+	void MainLoop() {};
 	void Cleanup();
 	void CleanupSwapChain();
 	void CreateMyWindow();
@@ -183,41 +322,29 @@ private:
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-	void CreateImageViews();
-	VkImageView CreateImageView(VkImage image, VkFormat format);
-
-	void CreateRenderPass();
-	void CreateGraphicsPipeline();
-	VkShaderModule CreateShaderModule(const std::vector<char>& code);
-	void CreateFramebuffers();
+	void CreateSwapChainImageViews();
 	void CreateCommandPool();
-	void CreateCommandBuffers();
+
 	void CreateSyncObjects();
 	void RecreateSwapChain();
-	void UpdateUniformBuffer(uint32_t currentImage);
-	void CreateTextureImage(const char* filePath);
-	void CreateTextureImageView();
-	void CreateTextureSampler();
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	VkCommandBuffer BeginSingleTimeCommands();
-	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+	void CreateGlobleVeriable();
 
 
-	template<class T>
-	void CreateVertexBuffer(std::vector<T>vertexdata, VkRenderPass pipeline);
+	Model UploadMesh(Mesh* m_esh, int submesh = 0);
+	void UploadOpaqueMesh(Mesh* mesh, int submesh);
 
-	void UploadMesh(std::string renderPassName, Mesh* mesh, int submesh = 0) override;
+	void SkyboxPrepare();
+	void OpaquePrepare();
+	void OpaqueUpdate();
 
-	void CreateUniformBuffers();
-	void CreateDescriptorPool();
-	void CreateDescriptorSets();
+	void DifferPassPrepare();
+	void DifferPassUpdate();
+	void UploadDifferMesh(Mesh* mesh, int submesh);
 
-	void CreateDescriptorSetLayout();
+	void SSRPassPrepare();
+	void SSRPassUpdate();
+	void UploadSSRMesh(Mesh* mesh, int submesh);
 
-	void DrawFrame();
 
 
 

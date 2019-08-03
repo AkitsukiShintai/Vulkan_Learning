@@ -2,7 +2,7 @@
 #include"Application.h"
 #include"Mesh.h"
 #include"ModelReader.h"
-
+#include<glfw3.h>
 int main() {
 	Application* mApp = Application::GetInstance();
 
@@ -10,10 +10,65 @@ int main() {
 
 	mApp->Init();
 
-	Mesh* mesh = new Mesh();
-	ModelReader::ReadModule("bunny.ply", mesh);
-	mesh->UploadMesh();
-	mApp->UploadMesh("First", mesh);
 
-	mApp->Run();
+
+	//mesh->UploadMesh();
+	//mApp->UploadMesh("opaque", mesh);
+
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	
+	auto window = mApp->GetWindow();
+
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+		mApp->Run();
+	}
+
+
+	//mApp->Run();
+	return 0;
 }

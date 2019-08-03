@@ -83,4 +83,5 @@ void ModelReader::ReadMesh(Mesh* result, aiMesh* mesh, const aiScene* scene) {
 
 	result->SetVertices(vertices);
 	result->SetIndices(indices, 0);
+
 }
