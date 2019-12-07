@@ -18,14 +18,13 @@ layout(location = 3) in vec2 inTexCoord0;
 layout(location = 4) in vec3 inTexCoord1;
 layout(location = 5) in vec4 inTexCoord2;
 
-layout(location = 0) out vec2 fragTexCoord;
+layout(location = 0) out vec3 worldPos;
 
 void main() {
     //modling = transpose(modling);
-    vec4 pos = ubo.proj * ubo.view * modlingMat.modling * vec4(inPosition,1.0);   
-    pos = pos / pos.w;
-    fragTexCoord = pos.xy;
-    gl_Position =  pos;
+    vec4 pos = ubo.proj * ubo.view * modlingMat.modling * vec4(inPosition,1.0);  
+    gl_Position =  pos; 
+    worldPos =(modlingMat.modling * vec4(inPosition,1.00)).xyz;  
     // vec2 uv = pos * 0.1;
     // vec4 cameraRay = vec4(uv,1.0,1.0);
     // mat4 inverseCameraPro = inverse(ubo.proj);

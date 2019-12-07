@@ -15,6 +15,6 @@ layout(location = 2) out vec4 outposition;
 void main(){
 	outcolor = texture(sampleTexture,fragTexCoord.xy); 
 	outcolor.a = 1.0;
-	outnormal = vec4(normal,0);
+	outnormal = vec4(normalize(normal),0);
 	outposition = vec4(worldPos,1);
 }

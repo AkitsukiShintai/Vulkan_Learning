@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN
 #define __VULKAN_APPLICATION
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_RADIANS
+#define GLM_ENABLE_EXPERIMENTAL
 #include "Enums.h"
 #include"BasicStruct.h"
 #include <vulkan/vulkan.h>
@@ -16,6 +18,10 @@
 #include <unordered_map>
 #include "ObjectPool.h"
 #include "InternalStruct.h"
+#include <algorithm>
+#include <cmath>
+#include <gtc/matrix_transform.hpp>
+#include "gtx/quaternion.hpp"
 class VulkanApplication :public Application {
 
 private:
@@ -79,7 +85,7 @@ private:
 	bool m_FramebufferResized = false;
 
 	VkCommandPool m_CommandPool;
-
+	LightInfo sunLight;
 	std::vector<VkSemaphore> m_ImageAvailableSemaphores;
 	std::vector<VkSemaphore> m_RenderFinishedSemaphores;
 	std::vector<VkFence> m_InFlightFences;
@@ -109,7 +115,7 @@ private:
 	//std::unordered_map<size_t, std::vector<Model>>  m_Pipeline_Models;
 	////pass -- descriptor set layout
 	//std::unordered_map<size_t, VkDescriptorSetLayout>  m_Pipeline_DescriptorSetLayout;
-
+	VkSampler m_DifferSampler;
 	////0 skybox
 	////1 opaque
 	////2 differ 1
@@ -148,7 +154,17 @@ private:
 	std::vector<Model> SSRModels;
 	std::vector<VkDescriptorSet> SSRDescriptorSets;
 	VkDescriptorSet SSR_DescriptorSet;
+	Image SSR_RenderTarget;
 
+	//shadow
+	VkRenderPass shadowPass;
+	Pipeline shadowPipeline;
+	VkDescriptorSetLayout shadowLayout;
+	std::vector<VkDescriptorSet> shadowSets;
+	std::vector<Model> shadowModels;
+	Buffer lightCameraBuffer;
+	VkFramebuffer shadow_Frambuffer;
+	Image shadowDepth;
 	/*ObjectPool<VkRenderPass, 50> m_RenderPassPool;
 	ObjectPool<Image, 200> m_ImagePool;
 	ObjectPool<Pipeline, 200> m_PipelinePool;
@@ -189,7 +205,7 @@ public:
 	Image CreateCubeMap(std::vector<std::string> files);
 	Image CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VkImageType type = VK_IMAGE_TYPE_2D, uint32_t layers = 1, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL);
 	void CreateImageView(Image& image, VkFormat format, VkImageAspectFlags flag = VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType type = VK_IMAGE_VIEW_TYPE_2D);
-	VkFramebuffer CreateFrameBuffer(std::vector<Image> images, VkRenderPass renderPass);
+	VkFramebuffer CreateFrameBuffer(std::vector<Image> images, VkRenderPass renderPass, uint32_t width, uint32_t height);
 	VkPipelineShaderStageCreateInfo CreateShader(std::string name, VkShaderStageFlagBits stage, const char* enterFunction = "main");
 	Pipeline CreatePipeline(VkRenderPass renderPass,
 		std::vector<VkPipelineShaderStageCreateInfo> stages,
@@ -291,7 +307,7 @@ public:
 	void DrawFrame(const VkCommandBuffer& cmd, Image& presentImage);
 	void SwapImageToScreen() {};
 
-	void BeginRenderPass(const VkCommandBuffer& cmd, const VkRenderPass renderPass, const VkFramebuffer& framebuffer, const std::vector<VkClearValue>& clearColors);
+	void BeginRenderPass(const VkCommandBuffer& cmd, const VkRenderPass renderPass, const VkFramebuffer& framebuffer, const std::vector<VkClearValue>& clearColors, VkExtent2D area);
 	void BeginPipeline(const VkCommandBuffer& cmd, const Pipeline& pipeline, VkViewport viewPort = {}, VkRect2D scissor = {});
 	void DrawMesh(const VkCommandBuffer& cmd, const Model& model, const Pipeline& pipeline, const VkDescriptorSet* descriptorSet, size_t descriptorSetCount = 1);
 
@@ -328,7 +344,7 @@ public:
 	void CreateSyncObjects();
 	void RecreateSwapChain();
 	void CreateGlobleVeriable();
-
+	VkSampler CreateClampSamper();
 
 	Model UploadMesh(Mesh* m_esh, int submesh = 0);
 	void UploadOpaqueMesh(Mesh* mesh, int submesh);
@@ -346,6 +362,50 @@ public:
 	void UploadSSRMesh(Mesh* mesh, int submesh);
 
 
+	void ShadowPrepare();
+	void ShadowUpdate();
+
+	//get camera corners in camera space
+	//fov: degree
+	std::array<glm::vec3,4> CaluculateCameraCorners(const Camera& camera, float step);
+
+	template<class T>
+	T SmoothStep(const T& edge0, const T& edge1, const T& value) {
+		T t;
+		t = std::clamp((value - edge0) / (edge1 - edge0), 0.0, 1.0);
+		return t * t * (3.0 - 2.0 * t);
+	}
 
 
+
+
+	glm::quat FromTo(const glm::vec3& from, const glm::vec3& to) {
+		glm::quat q;
+		glm::vec3 a = glm::cross(glm::normalize(from), glm::normalize(to));
+		q.x = a.x;
+		q.y = a.y;
+		q.z = a.z;
+		q.w = 1.0f + glm::dot(from, to);
+		return q;
+		//glm::mat4x4 mat = (glm::mat4x4)q;
+	}
+
+	template<class T>
+	T Lerp(const T& a, const T& b, float t) {		
+		return a + t * (b - a);
+	}
+
+
+	//According to camera corners to generate light camera frustum
+	//need 8 corners
+	///viewMat : camera view matrix
+	glm::mat4x4 CalcuLightCameraFrustum(const CameraCorner& cameraCornersInCameraCoord, const glm::mat4x4& viewMat, LightInfo light);
+	const float LIGHT_CASCADES_STEP[5] = {0.0f, 0.067f,0.067f + 0.133f , 0.067f + 0.133f + 0.267f,1.0f };
+
+	void CalculateFourLightCameras(const CameraCorner& cameraCornersInCameraCoord, const CameraViewInfo& camera, LightInfo light, glm::mat4* results);
+
+	std::array<glm::mat4x4, 4> CalculateCameraCascadesFrustms(const Camera& camera, const LightInfo& light);
+
+	void WaterPrepare();
+	void LoadWaterMesh(Mesh* mesh, uint32_t submesh);
 };

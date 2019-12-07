@@ -28,10 +28,7 @@ void main() {
     //modling = transpose(modling);
     gl_Position = ubo.proj * ubo.view * modelingMatrix.model * vec4(inPosition,1.0) ;  
     worldPos = (modelingMatrix.model * vec4(inPosition,1.0)).xyz;
-    normal = inPosition;
-    if(inTexCoord0.xy != vec2(0,0)){
-        fragTexCoord = inTexCoord0;
-    }else{
-        fragTexCoord = inPosition.xy;
-    }
+    normal = (modelingMatrix.model * vec4(inNormal,0.0)).xyz;
+    fragTexCoord = inPosition.xy;
+   
 }

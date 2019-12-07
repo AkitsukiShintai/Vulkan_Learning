@@ -344,3 +344,9 @@ enum DataFormat {
 	  INDEX_TYPE_RANGE_SIZE = ( INDEX_TYPE_UINT32 -  INDEX_TYPE_UINT16 + 1),
 	  INDEX_TYPE_MAX_ENUM = 0x7FFFFFFF
  } ;
+
+ enum LightType {
+	 DIRECT_LIGHT = 0,
+	 POINT_LIGHT = 1,
+
+ };

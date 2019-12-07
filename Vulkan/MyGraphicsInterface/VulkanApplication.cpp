@@ -4,7 +4,6 @@
 #include <stdexcept>
 #include<set>
 #include<chrono>
-#include <gtc/matrix_transform.hpp>
 #include <stdarg.h>
 #include <fstream>
 #include<array>
@@ -15,35 +14,20 @@
 #include"ModelReader.h"
 #include <filesystem>
 #define COMPILE_SHADER
-
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 //#define R VK_FORMAT_R8G8B8A8_UNORM
 //#define B VK_FORMAT_B8G8R8A8_UNORM
 #define  COLOR_ATTACHMENT_FORMAT VK_FORMAT_R8G8B8A8_UNORM
 #define  DEPTH_ATTACHMENT_FORMAT VK_FORMAT_D32_SFLOAT_S8_UINT
-#define DATA_ATTACHMENT_FORMAT VK_FORMAT_R16G16B16A16_SFLOAT
-struct UniformBufferObject {
-	glm::mat4 m_odel;
-	glm::mat4 view;
-	glm::mat4 proj;
-};
-struct LightInfo {
-
-	glm::vec3 lightPos;
-	float  ambientStrenth;
-	glm::vec3 lightColor;
-
-
-};
-struct CameraInfo {
-	glm::mat4 view;
-	glm::mat4 proj;
-	glm::vec3 position;
-}camera;
-
+#define DATA_ATTACHMENT_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
+#define MOUSE_CALLBACK
+Camera camera;
 //camera info
-glm::vec3 pos = { 0,0,10 };
-glm::vec2 rotate = { 0,0 };
-glm::vec3 dir = { 0,0,-1 };
+//{x = 26.2728043 y = 32.1282730 z = -23.1095695 ...}
+glm::vec3 pos = { 0.0f,2.0f,10.0f };
+//glm::vec3 pos = { 26.27280f,32.128f,-23.109f};
+glm::vec3 dir = { 0.0f,0.0f,-1.0f };
+//glm::vec3 dir = { -1.0f,-1.0f,-1.0f };
 glm::vec3 up = { 0,1,0 };
 bool keys[1024];
 double m_ouseSpeed = 0.1f;
@@ -52,7 +36,7 @@ float lastFrame = 0.0f;   // 上一帧的时间
 float yaw, pitch;
 float lastX = 400, lastY = 400;
 bool firstMouse = true;
-float fov = 30;
+float fov = 60;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int m_ods)
 {
@@ -224,9 +208,12 @@ void VulkanApplication::Init() {
 	{
 		CreateMyWindow();
 	}
+
+#ifdef MOUSE_CALLBACK
 	glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetKeyCallback(m_Window, key_callback);
 	glfwSetCursorPosCallback(m_Window, m_ouse_callback);
+#endif
 	glfwSetScrollCallback(m_Window, scroll_callback);
 	CreateInstance();
 	CreateDebugCallback();
@@ -243,12 +230,51 @@ void VulkanApplication::Init() {
 
 	Prepare();
 }
+
+VkSampler VulkanApplication::CreateClampSamper() {
+
+	VkSampler sap;
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+
+	samplerInfo.anisotropyEnable = VK_FALSE;
+	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
+
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 0.0f;
+	if (vkCreateSampler(m_LogicDevice, &samplerInfo, nullptr, &sap) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
+	}
+	return sap;
+
+}
+
+
 void VulkanApplication::CreateGlobleVeriable() {
-	m_CameraBuffer = CreateBuffer(sizeof(CameraInfo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	camera.fov = 60.0f;
+	camera.aspect = m_Width / (float)m_Height;
+	camera.nearClip = 0.1f;
+	camera.farClip = 1000.0f;
+	camera.viewInfo = {};
+	m_CameraBuffer = CreateBuffer(sizeof(CameraViewInfo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	MapBuffer(m_CameraBuffer);
 	m_RenderTarget = CreateImage(m_Width, m_Height, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-
-	SetSampler(m_RenderTarget, CreateTextureSampler());
+	m_TextureSampler = CreateTextureSampler();
+	m_DifferSampler = CreateClampSamper();
+	SetSampler(m_RenderTarget, m_DifferSampler);
 	CreateImageView(m_RenderTarget, VK_FORMAT_B8G8R8A8_UNORM);
 	VkCommandBuffer cmd = CreateCommandBuffer();
 	TransitionImageLayout(cmd, m_RenderTarget, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -259,15 +285,16 @@ void VulkanApplication::CreateGlobleVeriable() {
 
 
 	//create depth buffer
-	m_DepthBuffer = CreateImage(m_Width, m_Height, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	m_DepthBuffer = CreateImage(m_Width, m_Height, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	CreateImageView(m_DepthBuffer, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
 	TransitionImageLayout(cmd, m_DepthBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
 	//create white color image for tex
 	m_WhiteImage = CreateTextureImage("..\\textures\\white.png");
-	m_TextureSampler = CreateTextureSampler();
 	SetSampler(m_WhiteImage, m_TextureSampler);
-	EndSingleTimeCommands(cmd);
+	
+	SetDescriptorImageInfo(m_DepthBuffer,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+	SetSampler(m_DepthBuffer, m_DifferSampler);
 
 	//load plain mesh
 	Mesh* mesh = new Mesh();
@@ -278,28 +305,44 @@ void VulkanApplication::CreateGlobleVeriable() {
 	//create light buffer
 	light = CreateBuffer(sizeof(LightInfo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 	MapBuffer(light);
-	LightInfo li = {};
-	li.ambientStrenth = 0.1f;
-	li.lightColor = glm::vec4(1,1,1,0);
-	li.lightPos = glm::vec3(0, 10, 0);
-	CopyDataToBuffer(&li, light);
+	sunLight = {};
+	sunLight.ambientStrenth = 0.1f;
+	sunLight.lightColor = glm::vec4(1,1,1,0);
+	sunLight.lightPos = glm::vec3(100, 100, 100);
+	sunLight.lightDir = glm::vec3(-1.0, -1.0, -1.0);
+	sunLight.type = DIRECT_LIGHT;
+	CopyDataToBuffer(&sunLight, light);
 	UnMapBuffer(light);
+
+	//shadow light camera
+	lightCameraBuffer = CreateBuffer(sizeof(glm::mat4x4)*4, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	MapBuffer(lightCameraBuffer);
+
+	//shadow depth
+	shadowDepth = CreateImage(4096, 4096, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	CreateImageView(shadowDepth, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	TransitionImageLayout(cmd, shadowDepth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	SetSampler(shadowDepth, m_DifferSampler);
+	SetDescriptorImageInfo(shadowDepth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+	EndSingleTimeCommands(cmd);
+
 }
 
 void VulkanApplication::Prepare() {
 
 	//skybox
 
-	SkyboxPrepare();
+	//SkyboxPrepare();
 
 	//Opaque pass
-	OpaquePrepare();
+	//OpaquePrepare();
 
 	//differ
 	DifferPassPrepare();
 
+	ShadowPrepare();
 	//SSR
-	SSRPassPrepare();
+	//SSRPassPrepare();
 }
 
 
@@ -312,14 +355,14 @@ void VulkanApplication::Run() {
 	auto cmd = CreateCommandBuffer();
 	//skybox
 	VkClearValue textureClearColor = { 0,0,0,0 };
-	VkClearValue depthClearColor = { 1,0 };
-	BeginRenderPass(cmd, m_RenderPasses[0], skyboxFramebuffer, { textureClearColor });
+	VkClearValue depthClearColor = { 1,0x00 };
+	/*BeginRenderPass(cmd, m_RenderPasses[0], skyboxFramebuffer, { textureClearColor });
 	BeginPipeline(cmd, skyboxPipeline);
 	DrawMesh(cmd, skyboxModel, skyboxPipeline, &skyboxDescriptorSet);
-	vkCmdEndRenderPass(cmd);
+	vkCmdEndRenderPass(cmd);*/
 
 	//////opaque
-	
+
 	//BeginRenderPass(cmd, m_RenderPasses[1], opaqueFramebuffer, { depthClearColor ,textureClearColor });
 	//BeginPipeline(cmd, opaquePipeline);
 	//for (size_t i = 0; i < opaqueModels.size(); i++)
@@ -327,23 +370,72 @@ void VulkanApplication::Run() {
 	//	DrawMesh(cmd, opaqueModels[i], opaquePipeline, &opaqueDescriptorSet[i]);
 	//}
 	//vkCmdEndRenderPass(cmd);
+	//shadow
 
+	TransitionImageLayout(cmd, shadowDepth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	BeginRenderPass(cmd, shadowPass, shadow_Frambuffer, { depthClearColor }, { 4096,4096 });
+	BeginPipeline(cmd, shadowPipeline);
+	VkViewport viewPort = {
+		0,0,4096,4096,0,1
+	};
+	VkRect2D scissor = {
+		{0,0},{4096,4096}
+	};
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
+	vkCmdSetViewport(cmd, 0, 1, &viewPort);
+	for (size_t i = 0; i < shadowModels.size(); i++)
+	{
+		DrawMesh(cmd, shadowModels[i], shadowPipeline, &shadowSets[i]);
+	}
+	vkCmdEndRenderPass(cmd);
 	//differ
 	//pass one
-	BeginRenderPass(cmd, m_RenderPasses[2], differ_framebuffer[0], { depthClearColor ,textureClearColor,textureClearColor,textureClearColor });	
+	BeginRenderPass(cmd, m_RenderPasses[2], differ_framebuffer[0], { depthClearColor ,textureClearColor,textureClearColor,textureClearColor }, m_SwapChainExtent);
 	BeginPipeline(cmd, differPipelines[0]);
+	 viewPort = {
+		0,0,1024,768,0,1
+	};
+	 scissor = {
+		{0,0},{1024,768}
+	};
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
+	vkCmdSetViewport(cmd, 0, 1, &viewPort);
 	for (size_t i = 0; i < differModels.size(); i++)
 	{
 		DrawMesh(cmd, differModels[i], differPipelines[0], &differDescriptorSets[i]);
 	}
 	vkCmdEndRenderPass(cmd);
-
+	shadowDepth.m_CurrentLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	TransitionImageLayout(cmd, shadowDepth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 	//pass two
-	BeginRenderPass(cmd, m_RenderPasses[3], differ_framebuffer[1], { textureClearColor });
+	BeginRenderPass(cmd, m_RenderPasses[3], differ_framebuffer[1], { depthClearColor ,textureClearColor }, m_SwapChainExtent);
+	viewPort = {
+		0,0,1024,768,0,1
+	};
 
+	vkCmdSetViewport(cmd, 0, 1, &viewPort);
+
+	scissor = {
+		{0,0},{1024,768}
+	};
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
 	BeginPipeline(cmd, differPipelines[1]);
 	DrawMesh(cmd,full_screen_rect, differPipelines[1], &differ_secondStageDescriptorSet);
 	vkCmdEndRenderPass(cmd);
+	//SSR
+
+	//BeginRenderPass(cmd, m_RenderPasses[4], SSR_framebuffer, { depthClearColor ,textureClearColor });
+
+	//BeginPipeline(cmd, SSRPipelines);
+
+	//for (size_t i = 0; i < SSRModels.size(); i++)
+	//{
+	//	DrawMesh(cmd, SSRModels[i], SSRPipelines, &SSRDescriptorSets[i]);
+	//}
+	//vkCmdEndRenderPass(cmd);
+
+
+
 
 	DrawFrame(cmd, m_RenderTarget);
 }
@@ -665,7 +757,8 @@ void VulkanApplication::CreateDevice() {
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
-
+	deviceFeatures.geometryShader = VK_TRUE;
+	deviceFeatures.shaderClipDistance = VK_TRUE;
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -951,7 +1044,7 @@ void VulkanApplication::CreateImageView(Image& image, VkFormat format, VkImageAs
 }
 
 
-VkFramebuffer VulkanApplication::CreateFrameBuffer(std::vector<Image> images, VkRenderPass renderPass) {
+VkFramebuffer VulkanApplication::CreateFrameBuffer(std::vector<Image> images, VkRenderPass renderPass,uint32_t width,uint32_t height) {
 	std::vector<VkImageView> attachments(images.size());
 	size_t i = 0;
 	for (Image& image : images)
@@ -965,8 +1058,8 @@ VkFramebuffer VulkanApplication::CreateFrameBuffer(std::vector<Image> images, Vk
 	framebufferInfo.renderPass = renderPass;
 	framebufferInfo.attachmentCount = attachments.size();
 	framebufferInfo.pAttachments = attachments.data();
-	framebufferInfo.width = m_SwapChainExtent.width;
-	framebufferInfo.height = m_SwapChainExtent.height;
+	framebufferInfo.width = width;
+	framebufferInfo.height = height;
 	framebufferInfo.layers = 1;
 	VkFramebuffer frameBuffer;
 	if (vkCreateFramebuffer(m_LogicDevice, &framebufferInfo, nullptr, &frameBuffer) != VK_SUCCESS) {
@@ -1148,14 +1241,45 @@ void VulkanApplication::TransitionImageLayout(VkCommandBuffer cmd, Image& image,
 		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
+	
+	else if (image.m_CurrentLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
+	barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	}
+	else if (image.m_CurrentLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+	{
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
+	barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	
+	}
+
+	else if (image.m_CurrentLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+	{
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
+	barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT;
+	sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	}
 	else if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 	{
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+	barrier.srcAccessMask = 0;
+	barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	}
 	else {
 		throw std::invalid_argument("unsupported layout transition!");
@@ -1278,7 +1402,7 @@ VkRenderPass VulkanApplication::CreateRenderPass(std::vector< VkAttachmentDescri
 VkPipelineShaderStageCreateInfo VulkanApplication::CreateShader(std::string name, VkShaderStageFlagBits stage, const char* enterFunction) {
 	std::filesystem::path path();
 	std::string fullpath = "..\\shader\\" + name + ".spv";
-#ifdef COMPILE_SHADER
+#ifdef _DEBUG
 	std::string callPath = "..\\shader\\compile.bat ..\\shader\\" + name;
 	system(callPath.c_str());
 #endif // COMPILE_SHADER	
@@ -1413,15 +1537,15 @@ Pipeline VulkanApplication::CreatePipeline(VkRenderPass renderPass,
 		colorBlendings.push_back(colorBlending);
 	}
 
-	/*	VkDynamicState dynamicStates[] = {
+	VkDynamicState dynamicStates1[] = {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR,
-		};*/
+	};
 
 	VkPipelineDynamicStateCreateInfo dynamicState = {};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = dynamicStates.size();
-	dynamicState.pDynamicStates = dynamicStates.data();
+	dynamicState.dynamicStateCount =2;
+	dynamicState.pDynamicStates = dynamicStates1;
 
 	//VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	//layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1732,14 +1856,16 @@ void VulkanApplication::UpdateUniformBuffer() {
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	CameraInfo ubo = {};
 
-	ubo.position = pos;
-	ubo.view = glm::lookAt(pos, pos + dir, glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo.proj = glm::perspective(glm::radians(fov), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.01f, 1000.0f);
-	ubo.proj[1][1] *= -1;
-	CopyDataToBuffer(&ubo, m_CameraBuffer);
-	//vkUnmapMemory(m_LogicDevice, m_CameraBuffer.m_Memory);
+	camera.viewInfo.position = pos;
+	camera.viewInfo.view = glm::lookAt(pos, pos + dir, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	camera.viewInfo.proj = glm::perspective(glm::radians(fov), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, camera.nearClip, camera.farClip);
+	//camera.viewInfo.proj = glm::ortho(-512.0f, 512.0f,-384.0f,384.0f, 0.01f, 1000.0f);
+
+	camera.viewInfo.proj[1][1] *= -1;
+	CopyDataToBuffer(&camera.viewInfo, m_CameraBuffer);
+	//vkUnmapMemory(m_LogicDevice, m_CameraBuffer.m_Memory);s
 }
 
 Image VulkanApplication::CreateTextureImage(const char* filePath) {
@@ -2107,7 +2233,7 @@ VkWriteDescriptorSet VulkanApplication::CreateWriteDescriptorSetForImage(const I
 //	VkDescriptorBufferInfo bufferInfo = {};
 //	bufferInfo.buffer = m_CameraBuffer;
 //	bufferInfo.offset = 0;
-//	bufferInfo.range = sizeof(CameraInfo);
+//	bufferInfo.range = sizeof(CameraViewInfo);
 //
 //	VkDescriptorImageInfo imageInfo = {};
 //	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -2202,7 +2328,7 @@ VkWriteDescriptorSet VulkanApplication::CreateWriteDescriptorSetForImage(const I
 //}
 
 void VulkanApplication::Present(Image& image, uint32_t swapChainID, VkSemaphore* signalSemaphores) {
-
+	
 	VkImageCopy copy = {};
 	copy.dstOffset = {};
 	copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -2215,11 +2341,12 @@ void VulkanApplication::Present(Image& image, uint32_t swapChainID, VkSemaphore*
 	VkCommandBuffer cmd = CreateCommandBuffer(true);
 
 	CopyImageToImage(cmd, m_SwapChainExtent.width, m_SwapChainExtent.height, image, m_SwapChainImages[swapChainID]);
+	vkQueueWaitIdle(m_Queues.graphicsQueue);
 	EndSingleTimeCommands(cmd);
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.waitSemaphoreCount = 2;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 	VkSwapchainKHR swapChains[] = { m_SwapChain };
 	presentInfo.swapchainCount = 1;
@@ -2318,17 +2445,19 @@ void VulkanApplication::DrawFrame(const VkCommandBuffer& cmd, Image& presentImag
 		throw std::exception("failed to record command buffer!");
 	}
 
-
+	vkQueueWaitIdle(m_Queues.graphicsQueue);
 	UpdateUniformBuffer();
-	OpaqueUpdate();
+	//OpaqueUpdate();
 	DifferPassUpdate();
+	//SSRPassUpdate();
+	ShadowUpdate();
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 	VkSemaphore waitSemaphores[] = { m_ImageAvailableSemaphores[currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT };
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.waitSemaphoreCount = 0;
+	submitInfo.pWaitSemaphores = nullptr;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &cmd;
@@ -2341,21 +2470,22 @@ void VulkanApplication::DrawFrame(const VkCommandBuffer& cmd, Image& presentImag
 		throw std::exception("failed to submit draw command buffer!");
 	}
 
-	Present(presentImage, imageIndex, signalSemaphores);
-
+	VkSemaphore sems[2] = { m_ImageAvailableSemaphores[currentFrame]  ,m_RenderFinishedSemaphores[currentFrame] };
+	Present(presentImage, imageIndex, sems);
+	vkFreeCommandBuffers(m_LogicDevice, m_CommandPool, 1, &cmd);
 	vkQueueWaitIdle(m_Queues.presentQueue);
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 }
 
-void VulkanApplication::BeginRenderPass(const VkCommandBuffer& cmd, const VkRenderPass renderPass, const VkFramebuffer& framebuffer, const std::vector<VkClearValue>& clearColors) {
+void VulkanApplication::BeginRenderPass(const VkCommandBuffer& cmd, const VkRenderPass renderPass, const VkFramebuffer& framebuffer, const std::vector<VkClearValue>& clearColors,VkExtent2D area) {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = renderPass;
 	renderPassInfo.framebuffer = framebuffer;
 
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = m_SwapChainExtent;
+	renderPassInfo.renderArea.extent = area;
 
 	renderPassInfo.clearValueCount = clearColors.size();
 	renderPassInfo.pClearValues = clearColors.data();
@@ -2460,12 +2590,14 @@ void VulkanApplication::SkyboxPrepare() {
 		auto vertShader = CreateShader("skybox.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		auto bindingDescription = CreateVertexInputBindingDescription(0, VK_VERTEX_INPUT_RATE_VERTEX);
 		//attribute
-		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT);
-		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT);
+		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, position));
+		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, normal));
+		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, tangent));
+		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex_Aki, texCoord));
+		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, texCoord2));
+		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex_Aki, texCoord3));
+
+
 
 		//auto blendstate = CreatePipelineColorBlendAttachmentState();
 		//std::vector<VkPipelineColorBlendAttachmentState> states = { blendstate};
@@ -2492,7 +2624,7 @@ void VulkanApplication::SkyboxPrepare() {
 	m_RenderPasses[0] = mRenderpass;
 	skyboxPipeline = pipeline;
 	//create frame buffer
-	VkFramebuffer frameBuffer = CreateFrameBuffer({ m_RenderTarget }, mRenderpass);
+	VkFramebuffer frameBuffer = CreateFrameBuffer({ m_RenderTarget }, mRenderpass,m_Width,m_Height);
 	skyboxFramebuffer = frameBuffer;
 	skyboxDescriptorSet = descriptorSet;
 	skyboxDescriptorSetLayout = descriptorSetLayout;
@@ -2554,12 +2686,14 @@ void VulkanApplication::OpaquePrepare() {
 		auto vertShader = CreateShader("opaque.vert", VK_SHADER_STAGE_VERTEX_BIT);
 		auto bindingDescription = CreateVertexInputBindingDescription(0, VK_VERTEX_INPUT_RATE_VERTEX);
 		//attribute
-		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT);
-		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT);
+		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, position));
+		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, normal));
+		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, tangent));
+		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex_Aki, texCoord));
+		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, texCoord2));
+		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex_Aki, texCoord3));
+
+
 
 		//auto blendstate = CreatePipelineColorBlendAttachmentState();
 		//std::vector<VkPipelineColorBlendAttachmentState> states = { blendstate};
@@ -2574,7 +2708,7 @@ void VulkanApplication::OpaquePrepare() {
 	opaqueDescriptorSetLayout = descriptorSetLayout;
 
 	//create frame buffer
-	VkFramebuffer frameBuffer = CreateFrameBuffer({ m_DepthBuffer, m_RenderTarget }, renderpass);
+	VkFramebuffer frameBuffer = CreateFrameBuffer({ m_DepthBuffer, m_RenderTarget }, renderpass,m_Width, m_Height);
 	opaqueFramebuffer = frameBuffer;
 	//m_Pipeline_DescriptorSets[pipeline].push_back(descriptorSet);
 	m_RenderPasses[1] = renderpass;
@@ -2596,22 +2730,23 @@ void VulkanApplication::OpaqueUpdate() {
 
 void VulkanApplication::DifferPassPrepare() {
 	VkRenderPass differPass[2];
-	normalImage = CreateImage(m_Width, m_Height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	colorImage = CreateImage(m_Width, m_Height, COLOR_ATTACHMENT_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	positionImage = CreateImage(m_Width, m_Height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	normalImage = CreateImage(m_Width ,m_Height, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	colorImage = CreateImage(m_Width, m_Height,  COLOR_ATTACHMENT_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	positionImage = CreateImage(m_Width, m_Height, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	CreateImageView(normalImage,normalImage.m_Format);
 	CreateImageView(colorImage, colorImage.m_Format);
 	CreateImageView(positionImage, positionImage.m_Format);
-	SetSampler(normalImage, m_TextureSampler);
-	SetSampler(colorImage, m_TextureSampler);
-	SetSampler(positionImage, m_TextureSampler);
+	SetSampler(normalImage, m_DifferSampler);
+	SetSampler(colorImage, m_DifferSampler);
+	SetSampler(positionImage, m_DifferSampler);
 	SetDescriptorImageInfo(normalImage);
 	SetDescriptorImageInfo(colorImage);
 	SetDescriptorImageInfo(positionImage);
 
 	//Create Render pass
 	{
-		auto depthAtta = CreateAttachmentDescriptionForDepthAttachment(VK_FORMAT_D32_SFLOAT_S8_UINT);
+		auto depthAtta = CreateAttachmentDescriptionForDepthAttachment(VK_FORMAT_D32_SFLOAT_S8_UINT,VK_ATTACHMENT_LOAD_OP_CLEAR,VK_ATTACHMENT_STORE_OP_STORE,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,VK_ATTACHMENT_LOAD_OP_CLEAR,VK_ATTACHMENT_STORE_OP_STORE);
 		auto normalAtta = CreateAttachmentDescriptionForColorAttachment(DATA_ATTACHMENT_FORMAT,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		auto colorAtta = CreateAttachmentDescriptionForColorAttachment(COLOR_ATTACHMENT_FORMAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		auto positionAtta = CreateAttachmentDescriptionForColorAttachment(DATA_ATTACHMENT_FORMAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -2627,26 +2762,30 @@ void VulkanApplication::DifferPassPrepare() {
 		SetSubpassDescriptionBindPoint(subpassdec1);
 		SetSubpassDescriptionColorAttachment(subpassdec1, refs.data(), refs.size());
 		SetSubpassDescriptionDepthAttachment(subpassdec1, depthRef);
-		auto dependency1 = CreateSubpassDependency(VK_SUBPASS_EXTERNAL, 0,
+		/*auto dependency1 = CreateSubpassDependency(VK_SUBPASS_EXTERNAL, 0,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-			, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);	
-		differPass[0] = CreateRenderPass({ depthAtta,normalAtta,colorAtta,positionAtta }, { subpassdec1 }, { dependency1 });
+			, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);*/
+		differPass[0] = CreateRenderPass({ depthAtta,normalAtta,colorAtta,positionAtta }, { subpassdec1 }, {  });
 	}
 
 	{
-		auto renderTarget = CreateAttachmentDescriptionForColorAttachment(m_RenderTarget.m_Format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-		auto renderRef = CreateAttachmentReference(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		auto depthAtta = CreateAttachmentDescriptionForDepthAttachment(DEPTH_ATTACHMENT_FORMAT, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+			, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
+		auto depthRef = CreateAttachmentReference(0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+		auto renderTarget = CreateAttachmentDescriptionForColorAttachment(m_RenderTarget.m_Format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ATTACHMENT_LOAD_OP_CLEAR,VK_ATTACHMENT_STORE_OP_STORE);
+		auto renderRef = CreateAttachmentReference(1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		//render pass two
 		std::vector<VkAttachmentReference> refs2 = { renderRef };
 		VkSubpassDescription subpassdec2 = {};
 		SetSubpassDescriptionBindPoint(subpassdec2);
+		SetSubpassDescriptionDepthAttachment(subpassdec2, depthRef);
 		SetSubpassDescriptionColorAttachment(subpassdec2, refs2.data(), refs2.size());
-	
+	/*
 		auto dependency2 = CreateSubpassDependency(VK_SUBPASS_EXTERNAL, 0,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 			, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-
-		differPass[1] = CreateRenderPass({ renderTarget }, { subpassdec2 }, { dependency2 });
+		*/
+		differPass[1] = CreateRenderPass({ depthAtta, renderTarget }, { subpassdec2 }, {  });
 
 	}
 
@@ -2654,7 +2793,6 @@ void VulkanApplication::DifferPassPrepare() {
 
 	//descriptor set layout
 	{
-
 		auto camera = CreateDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 		auto modelingMatrix = CreateDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 		auto textureImage = CreateDescriptorSetLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -2663,9 +2801,13 @@ void VulkanApplication::DifferPassPrepare() {
 		auto normalImage = CreateDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		auto colorImage = CreateDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		auto positionImage = CreateDescriptorSetLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-		auto lightInfo = CreateDescriptorSetLayoutBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-		differ_descriptorSetLayouts[1] = CreateDescriptorSetLayout({ normalImage,colorImage, positionImage,lightInfo });
+		auto depthBuffer = CreateDescriptorSetLayoutBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
+		auto lightInfo = CreateDescriptorSetLayoutBinding(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto cameraInfo = CreateDescriptorSetLayoutBinding(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto shadowDepthBuffer = CreateDescriptorSetLayoutBinding(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto shadowMatrixBuffer = CreateDescriptorSetLayoutBinding(7, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		differ_descriptorSetLayouts[1] = CreateDescriptorSetLayout({ normalImage,colorImage, positionImage,lightInfo,depthBuffer,cameraInfo,shadowDepthBuffer,shadowMatrixBuffer });
 	}
 
 
@@ -2679,30 +2821,52 @@ void VulkanApplication::DifferPassPrepare() {
 
 		auto bindingDescription = CreateVertexInputBindingDescription(0, VK_VERTEX_INPUT_RATE_VERTEX);
 		//attribute
-		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT);
-		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT);
+		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, position));
+		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, normal));
+		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, tangent));
+		auto attri3 = CreateVertexInputAttributeDescription(3,0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex_Aki, texCoord));
+		auto attri4 = CreateVertexInputAttributeDescription(4, 0,VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex_Aki, texCoord2));
+		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex_Aki, texCoord3));
 
-		auto colorBlend = CreatePipelineColorBlendAttachmentState(true);
+		auto colorBlend = CreatePipelineColorBlendAttachmentState(false);
 		VkPipelineColorBlendAttachmentState states[4] = { colorBlend ,colorBlend ,colorBlend};
 		auto colorBlendCreateInfo = CreatePipelineColorBlendStateCreateInfo(states, 3);
 		
 
-		VkPipelineDepthStencilStateCreateInfo depOpen = CreateDepthStencilStateCreateInfo(true, true);
+		VkPipelineDepthStencilStateCreateInfo depOpen = CreateDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE,VK_COMPARE_OP_LESS,0.0f,1.0f,VK_FALSE,VK_TRUE);
+		VkStencilOpState face = {};
+		face.compareMask = 0xff;
+		face.compareOp = VK_COMPARE_OP_ALWAYS;
+		face.passOp = VK_STENCIL_OP_REPLACE;
+		face.failOp = VK_STENCIL_OP_REPLACE;
+		face.depthFailOp = VK_STENCIL_OP_KEEP;
+		face.writeMask = 0xff;
+		face.reference = 1.0f;
+
+		VkStencilOpState back = face;
+		depOpen.front = face;
+		depOpen.back = back;
 		differPipelines[0] = CreatePipeline(differPass[0], { vertshader1,fragshader1 }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { differ_descriptorSetLayouts[0] }, depOpen,0, { colorBlendCreateInfo });
-		auto colorBlendclose = CreatePipelineColorBlendAttachmentState(true,VK_BLEND_FACTOR_SRC_ALPHA,VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,VK_BLEND_OP_ADD);
+		auto colorBlendclose = CreatePipelineColorBlendAttachmentState(false,VK_BLEND_FACTOR_SRC_ALPHA,VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,VK_BLEND_OP_ADD);
 		VkPipelineColorBlendAttachmentState states2[1] = { colorBlendclose};
 		auto colorBlendCreateInfo2 = CreatePipelineColorBlendStateCreateInfo(states2, 1);
-		VkPipelineDepthStencilStateCreateInfo depClose = CreateDepthStencilStateCreateInfo();
-		differPipelines[1] = CreatePipeline(differPass[1], { vertshader2,fragshader2 }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { differ_descriptorSetLayouts[1] }, depClose,0, { colorBlendCreateInfo2 });
+		auto dep = CreateDepthStencilStateCreateInfo(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS, 0, 1, VK_FALSE, VK_TRUE);
+		VkStencilOpState front = {};
+		front.compareMask = 0xff;
+		front.writeMask = 0xff;
+		front.compareOp = VK_COMPARE_OP_EQUAL;
+		front.depthFailOp = VK_STENCIL_OP_KEEP;
+		front.failOp = VK_STENCIL_OP_KEEP;
+		front.passOp = VK_STENCIL_OP_KEEP;
+		front.reference = 1;
+		dep.front = front;
+		dep.back = front;
+		differPipelines[1] = CreatePipeline(differPass[1], { vertshader2,fragshader2 }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { differ_descriptorSetLayouts[1] }, dep,0, { colorBlendCreateInfo2 });
 	}
 
 	//framebuffer
-	differ_framebuffer[0] = CreateFrameBuffer({ m_DepthBuffer,normalImage,colorImage,positionImage }, differPass[0]);
-	differ_framebuffer[1] = CreateFrameBuffer({ m_RenderTarget}, differPass[1]);
+	differ_framebuffer[0] = CreateFrameBuffer({ m_DepthBuffer,normalImage,colorImage,positionImage }, differPass[0], m_Width, m_Height);
+	differ_framebuffer[1] = CreateFrameBuffer({ m_DepthBuffer,m_RenderTarget}, differPass[1], m_Width, m_Height);
 
 
 
@@ -2714,13 +2878,16 @@ void VulkanApplication::DifferPassPrepare() {
 	ModelReader::ReadModule("..\\models\\bunny.ply", mesh);
 	mesh->m_Path = "..\\textures\\texture.jpg";
 	UploadDifferMesh(mesh, 0);
+	glm::mat4x4 modeling = glm::translate(glm::mat4x4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4x4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4x4(1.0f), glm::vec3(50.0f, 50.0f, 50.0f));
+
+	CopyDataToBuffer(&modeling, differModels[differModels.size() - 1].m_Modeling);
 
 	Mesh* plane = new Mesh();
 	ModelReader::ReadModule("..\\models\\plane.obj", plane);
 	plane->m_Path = "..\\textures\\white.png";
 	UploadDifferMesh(plane, 0);
 
-	glm::mat4x4 modeling = glm::translate(glm::mat4x4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4x4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4x4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
+	modeling = glm::translate(glm::mat4x4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4x4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4x4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
 	CopyDataToBuffer(&modeling,differModels[differModels.size()-1].m_Modeling);
 
 
@@ -2730,10 +2897,13 @@ void VulkanApplication::DifferPassPrepare() {
 	differ_secondStageDescriptorSet = CreateDescriptorSet({ desAllo });
 	auto normalWrite = CreateWriteDescriptorSetForImage(normalImage,0, differ_secondStageDescriptorSet);
 	auto colorWrite = CreateWriteDescriptorSetForImage(colorImage, 1, differ_secondStageDescriptorSet);
-	auto posWrite = CreateWriteDescriptorSetForImage(normalImage, 2, differ_secondStageDescriptorSet);
-	auto lightInfoWrite = CreateWriteDescriptorSetForBuffer(light, 3, differ_secondStageDescriptorSet);
-	
-	UpdateDescriptorSets({ normalWrite ,colorWrite ,posWrite ,lightInfoWrite });
+	auto posWrite = CreateWriteDescriptorSetForImage(positionImage, 2, differ_secondStageDescriptorSet);
+	auto depthWrite = CreateWriteDescriptorSetForImage(m_DepthBuffer, 3, differ_secondStageDescriptorSet);
+	auto lightInfoWrite = CreateWriteDescriptorSetForBuffer(light, 4, differ_secondStageDescriptorSet);
+	auto cameraWrite = CreateWriteDescriptorSetForBuffer(m_CameraBuffer, 5, differ_secondStageDescriptorSet);
+	auto shadowdepthWrite = CreateWriteDescriptorSetForImage(shadowDepth, 6, differ_secondStageDescriptorSet);
+	auto shadowMatWrite = CreateWriteDescriptorSetForBuffer(lightCameraBuffer, 7, differ_secondStageDescriptorSet);
+	UpdateDescriptorSets({ normalWrite ,colorWrite ,posWrite ,depthWrite,lightInfoWrite,cameraWrite,shadowdepthWrite,shadowMatWrite });
 
 }
 
@@ -2760,7 +2930,7 @@ void VulkanApplication::UploadDifferMesh(Mesh* mesh, int submesh) {
 	//create descriptor set
 	mod.m_Modeling = CreateBuffer(sizeof(glm::mat4x4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 	MapBuffer(mod.m_Modeling);
-	auto allocateinfo = CreateDescriptorSetAllocateInfo(&opaqueDescriptorSetLayout);
+	auto allocateinfo = CreateDescriptorSetAllocateInfo(&differ_descriptorSetLayouts[0]);
 	differset = CreateDescriptorSet({ allocateinfo });
 	differDescriptorSets.push_back(differset);
 	auto cameraBuffer = CreateWriteDescriptorSetForBuffer(m_CameraBuffer, 0, differset);
@@ -2771,27 +2941,29 @@ void VulkanApplication::UploadDifferMesh(Mesh* mesh, int submesh) {
 }
 
 void VulkanApplication::DifferPassUpdate() {
-	for (auto& model : differModels)
+	/*for (auto& model : differModels)
 	{
-		glm::mat4x4 modeling = glm::translate(glm::mat4x4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4x4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4x4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
-		CopyDataToBuffer(&modeling, model.m_Modeling);
-	}
+		CopyDataToBuffer(&model.m_ModlingMat, model.m_Modeling);
+	}*/
 }
 
 
 
 void VulkanApplication::SSRPassPrepare() {
 	VkRenderPass SSRRenderPass;
+	SSR_RenderTarget = CreateImage(m_Width, m_Height, COLOR_ATTACHMENT_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	CreateImageView(SSR_RenderTarget, SSR_RenderTarget.m_Format);
+	SetSampler(SSR_RenderTarget, m_TextureSampler);
+	SetDescriptorImageInfo(SSR_RenderTarget);
 	//Create Render pass
 	{
-		auto depthAtta = CreateAttachmentDescriptionForDepthAttachment(DEPTH_ATTACHMENT_FORMAT);
-		auto renderTarget = CreateAttachmentDescriptionForColorAttachment(m_RenderTarget.m_Format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-		auto renderRef = CreateAttachmentReference(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		auto depthAtta = CreateAttachmentDescriptionForDepthAttachment(DEPTH_ATTACHMENT_FORMAT,VK_ATTACHMENT_LOAD_OP_LOAD,VK_ATTACHMENT_STORE_OP_DONT_CARE,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+		,VK_ATTACHMENT_LOAD_OP_LOAD,VK_ATTACHMENT_STORE_OP_DONT_CARE);
+		auto renderTarget = CreateAttachmentDescriptionForColorAttachment(COLOR_ATTACHMENT_FORMAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		auto renderRef = CreateAttachmentReference(1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		auto depthRef = CreateAttachmentReference(0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
-
-
 		//subpass
-		std::vector<VkAttachmentReference> refs = { depthRef,renderRef };
+		std::vector<VkAttachmentReference> refs = {renderRef};
 		VkSubpassDescription subpassdec1 = {};
 		SetSubpassDescriptionBindPoint(subpassdec1);
 		SetSubpassDescriptionColorAttachment(subpassdec1, refs.data(), refs.size());
@@ -2810,8 +2982,9 @@ void VulkanApplication::SSRPassPrepare() {
 		auto colorTex = CreateDescriptorSetLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		auto worldTex = CreateDescriptorSetLayoutBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		auto depthTex = CreateDescriptorSetLayoutBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto modeling = CreateDescriptorSetLayoutBinding(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
-		SSR_descriptorSetLayout = CreateDescriptorSetLayout({ camera,normalTex, colorTex,worldTex,depthTex });
+		SSR_descriptorSetLayout = CreateDescriptorSetLayout({ camera,normalTex, colorTex,worldTex,depthTex,modeling });
 	}
 
 
@@ -2821,15 +2994,17 @@ void VulkanApplication::SSRPassPrepare() {
 		auto fragshader = CreateShader("SSR.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		auto bindingDescription = CreateVertexInputBindingDescription(0, VK_VERTEX_INPUT_RATE_VERTEX);
-		//attribute
-		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT);
-		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT);
-		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT);
+	
+		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, position));
+		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, normal));
+		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, tangent));
+		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex_Aki, texCoord));
+		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, texCoord2));
+		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex_Aki, texCoord3));
+
 
 		auto colorBlend = CreatePipelineColorBlendAttachmentState(false);
+
 		VkPipelineColorBlendAttachmentState states[1] = { colorBlend };
 		auto colorBlendCreateInfo = CreatePipelineColorBlendStateCreateInfo(states, 1);
 		//TODO: stencil compare
@@ -2844,11 +3019,11 @@ void VulkanApplication::SSRPassPrepare() {
 		front.reference = 1;
 		dep.front = front;
 		dep.back = front;
-		SSRPipelines = CreatePipeline(SSRRenderPass, { vertshader,fragshader }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { differ_descriptorSetLayouts[0] }, dep, 0, { colorBlendCreateInfo });
+		SSRPipelines = CreatePipeline(SSRRenderPass, { vertshader,fragshader }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { SSR_descriptorSetLayout}, dep, 0, { colorBlendCreateInfo });
 	}
 
 	//framebuffer
-	SSR_framebuffer = CreateFrameBuffer({ m_DepthBuffer,normalImage,colorImage,positionImage }, SSRRenderPass);
+	SSR_framebuffer = CreateFrameBuffer({ m_DepthBuffer,SSR_RenderTarget }, SSRRenderPass, m_Width, m_Height);
 	m_RenderPasses[4] = SSRRenderPass;
 
 	Mesh* plane = new Mesh();
@@ -2858,7 +3033,11 @@ void VulkanApplication::SSRPassPrepare() {
 
 }
 void VulkanApplication::SSRPassUpdate() {
-
+	for (auto& model : SSRModels)
+	{
+		glm::mat4x4 modeling = glm::translate(glm::mat4x4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4x4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4x4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
+		CopyDataToBuffer(&modeling, model.m_Modeling);
+	}
 
 }
 void VulkanApplication::UploadSSRMesh(Mesh* mesh, int submesh) {
@@ -2891,9 +3070,352 @@ void VulkanApplication::UploadSSRMesh(Mesh* mesh, int submesh) {
 	auto colorWrite = CreateWriteDescriptorSetForImage(colorImage, 2, ssrset);
 	auto posWrite = CreateWriteDescriptorSetForImage(positionImage, 3, ssrset);
 	auto depthWrite = CreateWriteDescriptorSetForImage(m_DepthBuffer, 4, ssrset);
-
-	UpdateDescriptorSets({ normalWrite, cameraBuffer ,colorWrite,posWrite,depthWrite });
+	auto modelingWrite = CreateWriteDescriptorSetForBuffer(mod.m_Modeling, 5, ssrset);
+	UpdateDescriptorSets({ normalWrite, cameraBuffer ,colorWrite,posWrite,depthWrite,modelingWrite });
 	SSRModels.push_back(mod);
 	
 
 }
+
+
+std::array<glm::vec3, 4> VulkanApplication::CaluculateCameraCorners(const Camera& camera, float step) {
+	std::array<glm::vec3, 4> result;
+	//degree to radians
+	float fovRadians = glm::radians(fov);
+	//make sure the step is between 0% to 100%(in near and far plane)
+	step = std::clamp(step, 0.0f, 1.0f);
+	float z = - Lerp(camera.nearClip, camera.farClip, step);
+	float h = z * std::tanf(fovRadians * 0.5f);
+	float w = h * camera.aspect;
+	result[0] = glm::vec3(w, h, z);
+	result[1] = glm::vec3(w, -h, z);
+	result[2] = glm::vec3(-w, -h, z);
+	result[3] = glm::vec3(-w, h, z);
+	return result;
+};
+
+glm::mat4x4 VulkanApplication::CalcuLightCameraFrustum(const CameraCorner& cameraCornersInCameraCoord, const glm::mat4x4& viewMat, LightInfo light) {
+	std::array<glm::vec3, 4> nearCorners;
+	std::array<glm::vec3, 4> farCorners;
+
+	if (light.type == LightType::DIRECT_LIGHT)
+	{
+		glm::mat4x4 viewMatInv = glm::inverse(viewMat);
+
+		glm::mat4x4 worldToLight = glm::lookAt(light.lightPos, glm::vec3(0.0f, 0.0f, 0.0f), up);
+		glm::mat4x4 lightToWorld = glm::inverse(worldToLight);
+
+		//translate corners to light space
+		for (int i = 0; i < 4; ++i)
+		{
+			nearCorners[i] =  viewMatInv * glm::vec4(cameraCornersInCameraCoord.nearCorners[i], 1.0);
+			nearCorners[i] = worldToLight * glm::vec4(nearCorners[i],1.0);
+			farCorners[i] = worldToLight * viewMatInv * glm::vec4(cameraCornersInCameraCoord.farCorners[i], 1.0);
+		}
+
+
+		float minX = (std::numeric_limits<float>::max)();
+		float maxX = -(std::numeric_limits<float>::max)();
+		float minY = (std::numeric_limits<float>::max)();
+		float maxY = -(std::numeric_limits<float>::max)();
+		float minZ = (std::numeric_limits<float>::max)();
+		float maxZ = -(std::numeric_limits<float>::max)();
+
+		for (int i = 0; i < 4; ++i)
+		{
+			//min x
+			if (minX > nearCorners[i].x)
+			{
+				minX = nearCorners[i].x;
+			}
+			if (minX > farCorners[i].x)
+			{
+				minX = farCorners[i].x;
+			}
+
+			//min y
+			if (minY > nearCorners[i].y)
+			{
+				minY = nearCorners[i].y;
+			}
+			if (minY > farCorners[i].y)
+			{
+				minY = farCorners[i].y;
+			}
+
+			//min z
+			if (minZ > nearCorners[i].z)
+			{
+				minZ = nearCorners[i].z;
+			}
+			if (minZ > farCorners[i].z)
+			{
+				minZ = farCorners[i].z;
+			}
+
+			//max x
+			if (maxX < nearCorners[i].x)
+			{
+				maxX = nearCorners[i].x;
+			}
+			if (maxX < farCorners[i].x)
+			{
+				maxX = farCorners[i].x;
+			}
+
+			//max y
+			if (maxY < nearCorners[i].y)
+			{
+				maxY = nearCorners[i].y;
+			}
+			if (maxY < farCorners[i].y)
+			{
+				maxY = farCorners[i].y;
+			}
+
+			//max z
+			if (maxZ < nearCorners[i].z)
+			{
+				maxZ = nearCorners[i].z;
+			}
+			if (maxZ < farCorners[i].z)
+			{
+				maxZ = farCorners[i].z;
+			}
+		}
+
+		//near far plane in light coord because of z is always less that 0 in light coord, 
+		//near plane should be greater z
+		nearCorners[0] = glm::vec3(minX, minY, maxZ);
+		nearCorners[1] = glm::vec3(maxX, minY, maxZ);
+		nearCorners[2] = glm::vec3(maxX, maxY, maxZ);
+		nearCorners[3] = glm::vec3(minX, maxY, maxZ);
+
+
+		farCorners[0] = glm::vec3(minX, minY, minZ);
+		farCorners[1] = glm::vec3(maxX, minY, minZ);
+		farCorners[2] = glm::vec3(maxX, maxY, minZ);
+		farCorners[3] = glm::vec3(minX, maxY, minZ);
+		//{x = 18.9480820f, y = 32.1282730f, z = -15.7848473f}
+
+		glm::vec3 pos = nearCorners[0] + (nearCorners[2] - nearCorners[0]) * 0.5f;
+		glm::vec3 lightPos = lightToWorld * glm::vec4(pos, 1.0f);
+		//dirLightCamera.transform.rotation = dirLight.transform.rotation;
+		float nearClipPlane = 0;
+		float farClipPlane = maxZ - minZ;
+		float h = glm::length(nearCorners[1] - nearCorners[2]) * 0.5f;
+		float left = glm::length(nearCorners[0] - nearCorners[1]) * 0.5f;
+		auto view = glm::lookAt(lightPos, lightPos + light.lightDir, glm::vec3(0.0f, 1.0f, 0.0f));
+		auto proj = glm::ortho(-left, left, -h, h, nearClipPlane, farClipPlane);
+		//proj = glm::perspective(glm::radians(60.0f),1.0f,0.1f,1000.0f);
+		proj[1][1] *= -1.0f;
+		return proj * view;
+	}
+}
+
+void VulkanApplication::CalculateFourLightCameras(const CameraCorner& cameraCornersInCameraCoord, const CameraViewInfo& camera, LightInfo light, glm::mat4* results) {
+	CameraCorner cascadesCorners[4] = {};
+	for (int i = 0; i < 4; i++)
+	{
+		cascadesCorners[0].nearCorners[i] = Lerp(cameraCornersInCameraCoord.nearCorners[i], cameraCornersInCameraCoord.farCorners[i], LIGHT_CASCADES_STEP[0]);
+		cascadesCorners[0].farCorners[i] = Lerp(cameraCornersInCameraCoord.nearCorners[i], cameraCornersInCameraCoord.farCorners[i], LIGHT_CASCADES_STEP[1]);
+
+		cascadesCorners[1].nearCorners[i] = cascadesCorners[0].nearCorners[i];
+		cascadesCorners[1].farCorners[i] = Lerp(cameraCornersInCameraCoord.nearCorners[i], cameraCornersInCameraCoord.farCorners[i], LIGHT_CASCADES_STEP[2]);
+
+		cascadesCorners[2].nearCorners[i] = cascadesCorners[0].nearCorners[i];
+		cascadesCorners[2].farCorners[i] = Lerp(cameraCornersInCameraCoord.nearCorners[i], cameraCornersInCameraCoord.farCorners[i ], LIGHT_CASCADES_STEP[3]);
+
+		cascadesCorners[3].nearCorners[i] = cascadesCorners[0].nearCorners[i];
+		cascadesCorners[3].farCorners[i] = Lerp(cameraCornersInCameraCoord.nearCorners[i], cameraCornersInCameraCoord.farCorners[i], LIGHT_CASCADES_STEP[4]);
+	}
+
+	for (int i = 0; i < 4; ++i)
+	{
+		results[i] = CalcuLightCameraFrustum(cascadesCorners[i], camera.view, light);
+	}
+
+	return;
+}
+
+std::array<glm::mat4x4, 4> VulkanApplication::CalculateCameraCascadesFrustms(const Camera& camera, const LightInfo& light) {
+	if (light.type != DIRECT_LIGHT)
+	{
+		return std::array<glm::mat4x4, 4>();
+	}
+
+	CameraCorner corner;
+	corner.nearCorners = CaluculateCameraCorners(camera, 0);
+	corner.farCorners = CaluculateCameraCorners(camera, 1);
+
+	std::array<glm::mat4x4, 4> result;
+	CalculateFourLightCameras(corner, camera.viewInfo, light, result.data());
+	return result;
+
+}
+
+void VulkanApplication::ShadowPrepare() {
+	
+	//render pass
+	{
+		auto depthBuffer = CreateAttachmentDescriptionForDepthAttachment(DEPTH_ATTACHMENT_FORMAT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
+		auto depthbufferRef = CreateAttachmentReference(0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+		VkSubpassDescription subpassdesc = {};
+		SetSubpassDescriptionBindPoint(subpassdesc);
+		SetSubpassDescriptionDepthAttachment(subpassdesc, depthbufferRef);
+
+		shadowPass = CreateRenderPass({ depthBuffer }, { subpassdesc }, {  });
+	}
+	//descriptor set layout
+	{
+		auto lightCameraDescriptor = CreateDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_GEOMETRY_BIT, 1);
+		//auto lightCameraDescriptor = CreateDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+
+		auto modelingDescriptor = CreateDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		shadowLayout = CreateDescriptorSetLayout({ lightCameraDescriptor,modelingDescriptor });
+	}
+
+
+	//pipeline
+	{
+		auto vertShader = CreateShader("..//shader//shadow.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		auto fragShader = CreateShader("..//shader//shadow.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto gemoShader = CreateShader("..//shader//shadow.geom", VK_SHADER_STAGE_GEOMETRY_BIT);
+		auto bindingDescription = CreateVertexInputBindingDescription(0, VK_VERTEX_INPUT_RATE_VERTEX);
+		//attribute
+		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, position));
+		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, normal));
+		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, tangent));
+		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex_Aki, texCoord));
+		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, texCoord2));
+		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex_Aki, texCoord3));
+
+		VkPipelineDepthStencilStateCreateInfo depthTestOn = CreateDepthStencilStateCreateInfo(VK_TRUE,VK_TRUE,VK_COMPARE_OP_LESS,0.0F,1.0F,VK_FALSE,VK_FALSE);		
+		shadowPipeline = CreatePipeline(shadowPass, { vertShader,fragShader,gemoShader }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { shadowLayout }, depthTestOn, 0);
+		//shadowPipeline = CreatePipeline(shadowPass, { vertShader,fragShader }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { shadowLayout }, depthTestOn, 0);
+
+	}
+
+	Mesh* mesh = new Mesh();
+	ModelReader::ReadModule("..\\models\\bunny.ply", mesh);
+	mesh->m_Path = "..\\textures\\texture.jpg";
+	Model bunnyModel = UploadMesh(mesh, 0);
+	glm::mat4x4 modeling = glm::translate(glm::mat4x4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4x4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4x4(1.0f), glm::vec3(50.0f, 50.0f, 50.0f));
+
+	//create descriptor set
+	bunnyModel.m_Modeling = CreateBuffer(sizeof(glm::mat4x4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	MapBuffer(bunnyModel.m_Modeling);
+	CopyDataToBuffer(&modeling, bunnyModel.m_Modeling);
+	auto allocateinfo = CreateDescriptorSetAllocateInfo(&shadowLayout);
+	VkDescriptorSet shadowSet = CreateDescriptorSet({ allocateinfo });
+	SSRDescriptorSets.push_back(shadowSet);
+	auto cameraBuffer = CreateWriteDescriptorSetForBuffer(lightCameraBuffer, 1, shadowSet);
+	auto modelingWrite = CreateWriteDescriptorSetForBuffer(bunnyModel.m_Modeling, 0, shadowSet);
+	UpdateDescriptorSets({cameraBuffer ,modelingWrite });
+	shadowSets.push_back(shadowSet);
+	shadowModels.push_back(bunnyModel);
+
+	//create frame buffer
+	shadow_Frambuffer = CreateFrameBuffer({ shadowDepth },shadowPass,4096, 4096);
+
+
+}
+void VulkanApplication::ShadowUpdate() {
+	std::array<glm::mat4x4, 4> lightCamera;
+	lightCamera =CalculateCameraCascadesFrustms(camera, sunLight);
+	//lightCamera[0] = camera.viewInfo.proj * camera.viewInfo.view;
+	CopyDataToBuffer(lightCamera.data(), lightCameraBuffer);
+}
+
+void VulkanApplication::WaterPrepare(){
+	std::string texture = "Water-0341";
+	VkRenderPass waterPass;
+	Pipeline waterPipeline;
+	VkFramebuffer waterFramebuffer;
+	VkDescriptorSetLayout waterDescriptorSetLayout;
+	VkDescriptorSet waterDescriptorSet;
+	Model waterModel;
+	Image waterTexture = CreateTextureImage("Water-0341.jpg");
+	Image waterNormalTexture = CreateTextureImage("Water-0341normal.jpg");
+	WaterParameter waterPara = {};
+	Buffer waterParaBuffer = CreateBuffer(sizeof(WaterParameter), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	//Render Pass
+	{
+		auto colorAttach = CreateAttachmentDescriptionForColorAttachment(COLOR_ATTACHMENT_FORMAT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,VK_ATTACHMENT_LOAD_OP_LOAD);
+		auto colorRef = CreateAttachmentReference(1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		auto depthAttach = CreateAttachmentDescriptionForDepthAttachment(DEPTH_ATTACHMENT_FORMAT, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
+		auto depthRef = CreateAttachmentReference(0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+		VkSubpassDescription subpassDes;
+		SetSubpassDescriptionBindPoint(subpassDes);
+		SetSubpassDescriptionColorAttachment(subpassDes, &colorRef, 1);
+		SetSubpassDescriptionDepthAttachment(subpassDes, depthRef);
+		waterPass = CreateRenderPass({ colorAttach,depthAttach }, { subpassDes }, {});
+	}
+
+	//descriptor
+	{
+		auto waterTexture = CreateDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto waterNormalTexture = CreateDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto depthTexture = CreateDescriptorSetLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto waterParameters = CreateDescriptorSetLayoutBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto modelingMatrix = CreateDescriptorSetLayoutBinding(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto lightInfo = CreateDescriptorSetLayoutBinding(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+		waterDescriptorSetLayout = CreateDescriptorSetLayout({ waterTexture ,waterNormalTexture , waterParameters, depthTexture ,modelingMatrix,lightInfo });
+	}
+
+	//pipeline
+	{
+		auto vertShader = CreateShader("..//shader//water.vert", VK_SHADER_STAGE_VERTEX_BIT);
+		auto fragShader = CreateShader("..//shader//water.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+		//auto gemoShader = CreateShader("..//shader//shadow.geom", VK_SHADER_STAGE_GEOMETRY_BIT);
+		auto bindingDescription = CreateVertexInputBindingDescription(0, VK_VERTEX_INPUT_RATE_VERTEX);
+		//attribute
+		auto attri0 = CreateVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, position));
+		auto attri1 = CreateVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, normal));
+		auto attri2 = CreateVertexInputAttributeDescription(2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, tangent));
+		auto attri3 = CreateVertexInputAttributeDescription(3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex_Aki, texCoord));
+		auto attri4 = CreateVertexInputAttributeDescription(4, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex_Aki, texCoord2));
+		auto attri5 = CreateVertexInputAttributeDescription(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex_Aki, texCoord3));
+
+		VkPipelineDepthStencilStateCreateInfo depthTestOnButNotWrite = CreateDepthStencilStateCreateInfo(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS, 0.0F, 1.0F, VK_FALSE, VK_FALSE);
+		auto colorBlend = CreatePipelineColorBlendAttachmentState(VK_TRUE);
+		auto colorblendCreateInfo = CreatePipelineColorBlendStateCreateInfo(&colorBlend, 1);
+		
+		waterPipeline = CreatePipeline(waterPass, { vertShader,fragShader }, { bindingDescription }, { attri0 ,attri1 ,attri2 ,attri3 ,attri4,attri5 }, { waterDescriptorSetLayout }, depthTestOnButNotWrite, 0, { colorblendCreateInfo });
+	}
+
+	//Frame buffer
+	{
+		waterFramebuffer = CreateFrameBuffer({ m_DepthBuffer,m_RenderTarget }, waterPass, m_Width, m_Height);
+	
+	}
+
+
+	Mesh* plane = new Mesh();
+	ModelReader::ReadModule("..\\models\\plane.obj", plane);
+	//plane->m_Path = "..\\textures\\white.png";
+	waterModel = UploadMesh(plane);
+
+	//descriptor set
+	auto setallo = CreateDescriptorSetAllocateInfo(&waterDescriptorSetLayout, 1);
+	waterDescriptorSet = CreateDescriptorSet({ setallo });
+	auto waterTexWrite = CreateWriteDescriptorSetForImage(waterTexture, 0, waterDescriptorSet);
+	auto waterNormalTextureWrite = CreateWriteDescriptorSetForImage(waterNormalTexture, 1, waterDescriptorSet);
+	auto depthTextureWrite = CreateWriteDescriptorSetForImage(m_DepthBuffer, 2, waterDescriptorSet);
+	auto waterParameterWrite = CreateWriteDescriptorSetForBuffer(waterParaBuffer, 3, waterDescriptorSet);
+	auto modelingWrite = CreateWriteDescriptorSetForBuffer(waterModel.m_Modeling, 4, waterDescriptorSet);
+	auto lightInfoWrite = CreateWriteDescriptorSetForBuffer(light, 5, waterDescriptorSet);
+
+
+}
+
+
+void VulkanApplication::LoadWaterMesh(Mesh* mesh, uint32_t submesh) {
+	
+
+
+}
+
+void WaterUpedate() {}

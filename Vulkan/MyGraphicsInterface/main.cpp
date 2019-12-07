@@ -6,7 +6,7 @@
 int main() {
 	Application* mApp = Application::GetInstance();
 
-	mApp->SetApplicationInfo("Vulkan",800,800);
+	mApp->SetApplicationInfo("Vulkan",1024,768);
 
 	mApp->Init();
 

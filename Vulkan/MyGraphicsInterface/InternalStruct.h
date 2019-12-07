@@ -36,6 +36,8 @@ struct Model {
 	uint32_t m_IndexSize;
 	Image m_Texture;
 	Buffer m_Modeling;
+	glm::mat4x4 m_ModlingMat;
+
 };
 
 

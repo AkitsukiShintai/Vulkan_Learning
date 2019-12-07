@@ -9,12 +9,13 @@ void ModelReader::ReadModule(const std::string& pFile, Mesh* mesh) {
 		aiProcess_CalcTangentSpace |
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
-		aiProcess_FlipUVs | aiProcess_GenNormals);
+		aiProcess_FlipUVs | aiProcess_GenSmoothNormals);
 	if (!scene)
 	{
 		std::exception(importer.GetErrorString());
 	}
 	aiNode* root = scene->mRootNode;
+	
 	ReadNode(root, scene, mesh);
 }
 
@@ -45,7 +46,6 @@ void ModelReader::ReadNode(aiNode* node, const aiScene* scene, Mesh* mesh) {
 void ModelReader::ReadMesh(Mesh* result, aiMesh* mesh, const aiScene* scene) {
 	std::vector<Vertex_Aki> vertices(mesh->mNumVertices);
 	std::vector<uint32_t> indices;
-
 	for (int i = 0; i < mesh->mNumVertices; i++)
 	{
 		Vertex_Aki vertex;
@@ -80,6 +80,8 @@ void ModelReader::ReadMesh(Mesh* result, aiMesh* mesh, const aiScene* scene) {
 			indices.push_back(face.mIndices[j]);
 		}
 	}
+
+
 
 	result->SetVertices(vertices);
 	result->SetIndices(indices, 0);

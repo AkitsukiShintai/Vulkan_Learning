@@ -16,5 +16,5 @@ void main() {
     //modling = transpose(modling);
     vec2 pos = inPosition.xz;
     gl_Position = vec4(pos * 0.1,0.0,1.0) ;  
-    fragTexCoord.xy = pos * 0.1 * 0.5 + 0.5;
+    fragTexCoord.xy =inTexCoord0;
 }

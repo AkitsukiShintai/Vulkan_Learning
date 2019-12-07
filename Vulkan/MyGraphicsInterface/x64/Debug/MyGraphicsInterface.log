@@ -1,100 +1,117 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(438,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  Application.cpp
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\Application.cpp(55,18): warning C4101:  'height': unreferenced local variable
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\Application.cpp(55,11): warning C4101:  'width': unreferenced local variable
+  CommandBuffer.cpp
+  InternalStruct.h
+  Mesh.cpp
+  ModelReader.cpp
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\Application.cpp(56,8): warning C4101:  'data': unreferenced local variable
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\ModelReader.cpp(25,20): warning C4018:  '<': signed/unsigned mismatch
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\ModelReader.cpp(40,20): warning C4018:  '<': signed/unsigned mismatch
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\ModelReader.cpp(49,20): warning C4018:  '<': signed/unsigned mismatch
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\ModelReader.cpp(75,20): warning C4018:  '<': signed/unsigned mismatch
   VulkanApplication.cpp
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(68,17): warning C4244:  “-=”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(78,11): warning C4244:  “=”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(79,11): warning C4244:  “=”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(84,16): warning C4244:  “初始化”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(85,16): warning C4244:  “初始化”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(86,10): warning C4244:  “=”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(87,10): warning C4244:  “=”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(308,21): warning C4244:  “初始化”: 从“double”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(599,77): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(875,16): warning C4244:  “=”: 从“VkDeviceSize”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(966,54): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1016,2): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1264,53): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1266,48): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1268,54): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1279,24): warning C4930:  “std::filesystem::path path(void)”: 未调用原型函数(是否是有意用变量定义的?)
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1319,65): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1320,69): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1336,37): warning C4244:  “=”: 从“uint32_t”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1337,38): warning C4244:  “=”: 从“uint32_t”转换到“float”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1353,48): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1355,46): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1423,55): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1437,52): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1449,41): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1565,38): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1795,55): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1782,23): warning C4101:  “m_emAllocInfo”: 未引用的局部变量
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1985,100): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2003,66): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2020,64): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2360,53): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2400,131): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2436,85): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2525,82): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2628,77): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2643,79): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2746,63): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2797,77): warning C4267:  “参数”: 从“size_t”转换到“uint32_t”，可能丢失数据
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2869,63): warning C4267:  “=”: 从“size_t”转换到“uint32_t”，可能丢失数据
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(121,1): warning C4267:  “=”: 从“size_t”转换到“unsigned int”，可能丢失数据
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :  查看对正在编译的函数 模板 实例化“void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty=uint32_t,
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty2=size_t &
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :  查看对正在编译的函数 模板 实例化“void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty=uint32_t,
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty2=size_t &
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         ]
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :  查看对正在编译的函数 模板 实例化“std::optional<uint32_t> &std::optional<uint32_t>::operator =<size_t&,void>(_Ty2)”的引用
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :         with
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :         [
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :             _Ty2=size_t &
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :         ]
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :  查看对正在编译的函数 模板 实例化“std::optional<uint32_t> &std::optional<uint32_t>::operator =<size_t&,void>(_Ty2)”的引用
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :         with
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :         [
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :             _Ty2=size_t &
-E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(585): message :         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\filesystem(2072): message :  查看对正在编译的 类 模板 实例化“std::chrono::time_point<std::filesystem::_File_time_clock,std::filesystem::_File_time_clock::duration>”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\xstring(1715): message :  查看对正在编译的 类 模板 实例化“std::basic_string_view<wchar_t,std::char_traits<wchar_t>>”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\xmemory0(203,1): warning C4267:  “初始化”: 从“size_t”转换到“_Ty”，可能丢失数据
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\xmemory0(203,1): warning C4267:         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\xmemory0(203,1): warning C4267:         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\xmemory0(203,1): warning C4267:             _Ty=unsigned int
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\xmemory0(203,1): warning C4267:         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(111): message :  查看对正在编译的函数 模板 实例化“void std::_Construct_in_place<unsigned int,size_t&>(_Ty &,size_t &) noexcept”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(111): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(111): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(111): message :             _Ty=unsigned int
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(111): message :         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :  查看对正在编译的函数 模板 实例化“_Ty &std::_Optional_construct_base<_Ty>::_Construct<size_t&>(size_t &)”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :             _Ty=uint32_t
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :  查看对正在编译的函数 模板 实例化“_Ty &std::_Optional_construct_base<_Ty>::_Construct<size_t&>(size_t &)”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :             _Ty=uint32_t
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(123): message :         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :  查看对正在编译的函数 模板 实例化“void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty=uint32_t,
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty2=size_t &
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         ]
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :  查看对正在编译的函数 模板 实例化“void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)”的引用
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         with
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         [
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty=uint32_t,
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :             _Ty2=size_t &
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.21.27702\include\optional(257): message :         ]
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\ModelReader.cpp(78,21): warning C4018:  '<': signed/unsigned mismatch
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(52,17): warning C4244:  '-=': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(62,11): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(63,11): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(68,16): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(69,16): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(70,10): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(71,10): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(351,21): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(691,77): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(968,16): warning C4244:  '=': conversion from 'VkDeviceSize' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1059,54): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1109,2): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1388,53): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1390,48): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1392,54): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1403,24): warning C4930:  'std::filesystem::path path(void)': prototyped function not called (was a variable definition intended?)
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1443,65): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1444,69): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1460,37): warning C4244:  '=': conversion from 'uint32_t' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1461,38): warning C4244:  '=': conversion from 'uint32_t' to 'float', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1477,48): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1479,46): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1561,52): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1573,41): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1689,38): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1921,55): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(1908,23): warning C4101:  'm_emAllocInfo': unreferenced local variable
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2111,100): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2129,66): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2146,64): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2490,53): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2530,131): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2566,85): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2657,82): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2763,77): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2782,79): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2844,20): warning C4244:  '=': conversion from 'float' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2916,63): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(2969,77): warning C4267:  'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(3048,63): warning C4267:  '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(121,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :  see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty=uint32_t,
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty2=size_t &
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :  see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty=uint32_t,
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty2=size_t &
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         ]
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :  see reference to function template instantiation 'std::optional<uint32_t> &std::optional<uint32_t>::operator =<size_t&,void>(_Ty2)' being compiled
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :         with
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :         [
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :             _Ty2=size_t &
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :         ]
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :  see reference to function template instantiation 'std::optional<uint32_t> &std::optional<uint32_t>::operator =<size_t&,void>(_Ty2)' being compiled
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :         with
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :         [
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :             _Ty2=size_t &
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(677): message :         ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\filesystem(2095): message :  see reference to class template instantiation 'std::chrono::time_point<std::filesystem::_File_time_clock,std::filesystem::_File_time_clock::duration>' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\xstring(1757): message :  see reference to class template instantiation 'std::basic_string_view<wchar_t,std::char_traits<wchar_t>>' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\xmemory(201,1): warning C4267:  'initializing': conversion from 'size_t' to '_Ty', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\xmemory(201,1): warning C4267:         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\xmemory(201,1): warning C4267:         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\xmemory(201,1): warning C4267:             _Ty=unsigned int
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\xmemory(201,1): warning C4267:         ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(111): message :  see reference to function template instantiation 'void std::_Construct_in_place<unsigned int,size_t&>(_Ty &,size_t &) noexcept' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(111): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(111): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(111): message :             _Ty=unsigned int
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(111): message :         ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :  see reference to function template instantiation '_Ty &std::_Optional_construct_base<_Ty>::_Construct<size_t&>(size_t &)' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :             _Ty=uint32_t
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :         ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :  see reference to function template instantiation '_Ty &std::_Optional_construct_base<_Ty>::_Construct<size_t&>(size_t &)' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :             _Ty=uint32_t
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(123): message :         ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :  see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty=uint32_t,
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty2=size_t &
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         ]
+  main.cpp
+  Generating Code...
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :  see reference to function template instantiation 'void std::_Optional_construct_base<_Ty>::_Assign<size_t&>(_Ty2)' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         with
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         [
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty=uint32_t,
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :             _Ty2=size_t &
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.22.27905\include\optional(257): message :         ]
+E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\VulkanApplication.cpp(3214): warning C4715:  'VulkanApplication::CalcuLightCameraFrustum': not all control paths return a value
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   MyGraphicsInterface.vcxproj -> E:\GitHubRepository\Vulkan_Learning\Vulkan\MyGraphicsInterface\..\Debug\MyGraphicsInterface.exe
